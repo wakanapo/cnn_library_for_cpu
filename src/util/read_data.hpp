@@ -4,10 +4,10 @@
 #include <cstdlib>
 
 namespace {
-  const char* kMnistTestImageFilePath = "data/t10k-images-idx3-ubyte";
-  const char* kMnistTrainImageFilePath = "data/train-images.idx3-ubyte";
-  const char* kMnistTestLabelFilePath = "data/t10k-labels-idx1-ubyte";
-  const char* kMnistTrainLabelFilePath = "data/train-labels.idx1-ubyte";
+  const char* kMnistTestImageFilePath = "data/mnist/t10k-images-idx3-ubyte";
+  const char* kMnistTrainImageFilePath = "data/mnist/train-images.idx3-ubyte";
+  const char* kMnistTestLabelFilePath = "data/mnist/t10k-labels-idx1-ubyte";
+  const char* kMnistTrainLabelFilePath = "data/mnist/train-labels.idx1-ubyte";
   const int kExpectImageMagicNumber = 2051;
   const int kExpectLabelMagicNumber = 2049;
 }
