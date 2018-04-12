@@ -1,0 +1,5 @@
+-std=c++11
+-I./include
+-I./src
+-I/home/wakana/googletest-master/googletest/include
+-L/home/wakana/googletest-master/build/googlemock/gtest
