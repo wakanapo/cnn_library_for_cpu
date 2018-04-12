@@ -1,0 +1,15 @@
+syntax = "proto3";
+package Arithmatic;
+
+message Calculation {
+  string file = 1;
+  int32 line = 2;
+  string operator = 3;
+  float a = 4;
+  float b = 5;
+  float ans = 6;
+}
+
+message One {
+  repeated Calculation calc = 1;
+}
