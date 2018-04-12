@@ -1,0 +1,15 @@
+syntax = "proto3";
+package CnnProto;
+
+message Weight {
+  repeated float w = 1 [packed=true];
+}
+
+message Bias {
+  repeated float b = 1 [packed=true];
+}
+
+message Params {
+  repeated Weight weights = 1;
+  repeated Bias biases = 2;
+}

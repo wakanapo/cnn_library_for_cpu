@@ -1,4 +1,4 @@
--std=c++11
+-std=c++14
 -I./include
 -I./src
 -I/home/wakana/googletest-master/googletest/include
