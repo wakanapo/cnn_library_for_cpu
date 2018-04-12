@@ -29,11 +29,8 @@ $(BINDIR)/ga: src/protos/cnn_params.pb.cc src/protos/genom.pb.cc src/protos/arit
 $(BINDIR)/protoc: src/protos/cnn_params.proto src/protos/arithmatic.proto src/protos/genom.proto
 	protoc -I=src/protos --cpp_out=src/protos src/protos/cnn_params.proto src/protos/arithmatic.proto src/protos/genom.proto
 
-$(BINDIR)/doubleTo: src/util/float_type.cpp src/protos/cnn_params.pb.cc $(BINDIR)
-	$(COMPILER) $(CXXFLAGS) -o $@ src/util/float_type.cpp src/protos/cnn_params.pb.cc -I$(SRCDIR) -I$(INCLUDEDIR) $(CFLAGS) `pkg-config --cflags --libs protobuf`
-
-$(BINDIR)/utest: test/util_test.cpp src/util/converter.cpp $(BINDIR)
-	$(COMPILER) $(CXXFLAGS) -o $@ test/util_test.cpp src/util/converter.cpp -I$(GTEST_INCLUDEDIR) -I$(SRCDIR) -I$(INCLUDEDIR) -L$(GTEST_LIBDIR) $(CFLAGS) $(TESTFLAGS)
+$(BINDIR)/utest: test/util_test.cpp src/util/converter.cpp src/protos/arithmatic.pb.cc  src/util/flags.cpp $(BINDIR)
+	$(COMPILER) $(CXXFLAGS) -o $@ test/util_test.cpp src/util/converter.cpp src/protos/arithmatic.pb.cc  src/util/flags.cpp -I$(GTEST_INCLUDEDIR) -I$(SRCDIR) -I$(INCLUDEDIR) -L$(GTEST_LIBDIR) $(CFLAGS) $(TESTFLAGS) `pkg-config --cflags --libs protobuf`
 
 .PHONY: clean
 clean:

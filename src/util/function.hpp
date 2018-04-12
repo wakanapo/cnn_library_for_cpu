@@ -83,17 +83,18 @@ void Function::deriv_ReLU(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Function::sigmoid(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
   for (int i = 0; i < t->size(); ++i)
-    (*t)[i] = DIV(1.0, ADD(1.0, exp(-1.0 * Converter::ToFloat((*t)[i]))));
+    (*t)[i] = DIV((float)1.0,
+                  ADD((float)1.0, (float)exp(-1.0 * Converter::ToFloat((*t)[i]))));
 }
 
 float uni_sigmoid(float v) {
-  return DIV(1.0, ADD(1.0, exp(-1.0 * v)));
+  return DIV((float)1.0, ADD((float)1.0, (float)exp(-1.0 * v)));
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Function::deriv_sigmoid(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
   for (int i = 0; i < t->size(); ++i)
-    (*t)[i] = MUL(uni_sigmoid((*t)[i]), SUB(1.0, uni_sigmoid((*t)[i])));
+    (*t)[i] = MUL(uni_sigmoid((*t)[i]), SUB((float)1.0, uni_sigmoid((*t)[i])));
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
@@ -105,10 +106,10 @@ void Function::softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
     for (int k = 0; k < col; ++k) {
       float sum = 0;
       for (int i = 0; i < row; ++i) {
-        sum = ADD(sum, exp(v[l * (row * col) + k * row + i]));
+        sum = ADD(sum, (float)exp(v[l * (row * col) + k * row + i]));
       }
       for (int j = 0; j < row; ++j) {
-        v[l * (row * col) + k * row + j] = DIV(exp(v[l * (row * col) + k * row + j]), sum);
+        v[l * (row * col) + k * row + j] = DIV((float)exp(v[l * (row * col) + k * row + j]), sum);
       }
     }
   }
@@ -123,7 +124,7 @@ void Function::deriv_softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T> *t) {
     for (int k = 0; k < col; ++k) {
       float sum = 0;
       for (int i = 0; i < row; ++i) {
-        sum = ADD(sum, exp(v[l * (row * col) + k * row + i]));
+        sum = ADD(sum, (float)exp(v[l * (row * col) + k * row + i]));
       }
       for (int j = 0; j < row; ++j) {
         int idx = l*(row*col) + k*row + j;
@@ -153,7 +154,9 @@ void Function::matmul(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
       for (int k = 0; k < t_row; ++k)
         for (int j = 0; j < m_row; ++j)
             (*ans)[l * (t_col * m_row) + i * m_row + j]
-              = ADD((*ans)[l * (t_col * m_row) + i * m_row + j], MUL(t[l * (t_col * t_row) + i * t_row + k],  m[l * (m_col * m_row) + k * m_row + j]));
+              = ADD((*ans)[l * (t_col * m_row) + i * m_row + j],
+                    (float)MUL(t[l * (t_col * t_row) + i * t_row + k],
+                               m[l * (m_col * m_row) + k * m_row + j]));
 }
 
 template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
