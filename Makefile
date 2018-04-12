@@ -32,6 +32,9 @@ $(BINDIR)/protoc: src/protos/cnn_params.proto src/protos/arithmatic.proto src/pr
 $(BINDIR)/utest: test/util_test.cpp src/util/converter.cpp src/protos/arithmatic.pb.cc  src/util/flags.cpp $(BINDIR)
 	$(COMPILER) $(CXXFLAGS) -o $@ test/util_test.cpp src/util/converter.cpp src/protos/arithmatic.pb.cc  src/util/flags.cpp -I$(GTEST_INCLUDEDIR) -I$(SRCDIR) -I$(INCLUDEDIR) -L$(GTEST_LIBDIR) $(CFLAGS) $(TESTFLAGS) `pkg-config --cflags --libs protobuf`
 
+src/protos/%.pb.cc: src/protos/%.proto
+	protoc -I=src/protos --cpp_out=src/protos $<
+
 .PHONY: clean
 clean:
 	rm -rf $(BINDIR)/utest $(BINDIR)/mlp $(BINDIR)/cnn/float $(BINDIR)/cnn test/util_test.o src/mlp/mlp_main.o src/cnn/cnn_main.o src/cnn/float/cnn_main.o src/util/flags.o $(BINDIR)
