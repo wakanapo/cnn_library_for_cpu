@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='cnn_params.proto',
   package='CnnProto',
   syntax='proto3',
-  serialized_pb=_b('\n\x10\x63nn_params.proto\x12\x08\x43nnProto\"\x17\n\x06Weight\x12\r\n\x01w\x18\x01 \x03(\x01\x42\x02\x10\x01\"\x15\n\x04\x42ias\x12\r\n\x01\x62\x18\x01 \x03(\x01\x42\x02\x10\x01\"K\n\x06Params\x12!\n\x07weights\x18\x01 \x03(\x0b\x32\x10.CnnProto.Weight\x12\x1e\n\x06\x62iases\x18\x02 \x03(\x0b\x32\x0e.CnnProto.Biasb\x06proto3')
+  serialized_pb=_b('\n\x10\x63nn_params.proto\x12\x08\x43nnProto\"\x17\n\x06Weight\x12\r\n\x01w\x18\x01 \x03(\x02\x42\x02\x10\x01\"\x15\n\x04\x42ias\x12\r\n\x01\x62\x18\x01 \x03(\x02\x42\x02\x10\x01\"K\n\x06Params\x12!\n\x07weights\x18\x01 \x03(\x0b\x32\x10.CnnProto.Weight\x12\x1e\n\x06\x62iases\x18\x02 \x03(\x0b\x32\x0e.CnnProto.Biasb\x06proto3')
 )
 
 
@@ -34,7 +34,7 @@ _WEIGHT = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='w', full_name='CnnProto.Weight.w', index=0,
-      number=1, type=1, cpp_type=5, label=3,
+      number=1, type=2, cpp_type=6, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -65,7 +65,7 @@ _BIAS = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='b', full_name='CnnProto.Bias.b', index=0,
-      number=1, type=1, cpp_type=5, label=3,
+      number=1, type=2, cpp_type=6, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,

@@ -141,7 +141,7 @@ void GeneticAlgorithm::save(std::string filename) {
     }
     g->set_evaluation(genom.getEvaluation());
   }
-  std::fstream output(home+"/utokyo-kudohlab/cnn_cpp/data/"+filename+".pb",
+  std::fstream output(home+"/utokyo-kudohlab/cnn_library_for_cpu/data/"+filename+".pb",
                       std::ios::out | std::ios::trunc | std::ios::binary);
   if (!gs.SerializeToOstream(&output))
     std::cerr << "Failed to save genoms." << std::endl;
@@ -184,7 +184,7 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(16, 100, 20, 0.05, 0.05, 50);
+  GeneticAlgorithm ga(8, 10, 2, 0.05, 0.05, 3);
   if (argc != 2) {
     std::cout << "Usage: ./bin/ga filepath" << std::endl;
     abort();

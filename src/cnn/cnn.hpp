@@ -133,7 +133,7 @@ void CNN<T>::simple_save(std::string fname) {
   simple.Conv1.saveParams(&params);
   simple.Affine1.saveParams(&params);
   simple.Affine2.saveParams(&params);
-  std::fstream output(home+"/utokyo-kudohlab/cnn_cpp/data/cnn/"+fname, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::fstream output(home+"/utokyo-kudohlab/cnn_library_for_cpu/data/cnn/"+fname, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!params.SerializeToOstream(&output)) {
     std::cerr << "Failed to write params." << std::endl;
   }
@@ -143,7 +143,7 @@ template <typename T>
 void CNN<T>::simple_load(std::string fname) {
   std::string home = getenv("HOME");
   CnnProto::Params p;
-  std::fstream input(home+"/utokyo-kudohlab/cnn_cpp/data/cnn/"+fname, std::ios::in | std::ios::binary);
+  std::fstream input(home+"/utokyo-kudohlab/cnn_library_for_cpu/data/cnn/"+fname, std::ios::in | std::ios::binary);
   if (!p.ParseFromIstream(&input)) {
     std::cerr << "Failed to load params." << std::endl;
   }
@@ -175,7 +175,7 @@ void CNN<T>::run() {
       if (Flags::IsSaveArithmetic()) {
         std::string home = getenv("HOME");
         std::stringstream sFile;
-        sFile << home << "/utokyo-kudohlab/cnn_cpp/data/arithmatic/10E_2_"
+        sFile << home << "/utokyo-kudohlab/cnn_library_for_cpu/data/arithmatic/10E_2_"
               << std::setw(5) << std::setfill('0') << i << ".pb";
         cnn.simple_train(x, t, eps);
         using namespace google::protobuf::io;
