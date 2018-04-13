@@ -4,7 +4,6 @@
 
 #include "protos/arithmatic.pb.h"
 #include "util/flags.hpp"
-#include "util/float_type.hpp"
 #include "util/converter.hpp"
 
 Arithmatic::One p;
@@ -23,80 +22,36 @@ void SaveArithmetic(const std::string operator_, const T a, const T b,
 
 template<typename T>
 T multiple(const T a, const T b, const char* file, int line) {
-  T a_, b_;
-  // if (Flags::GetType() == CONVERT_FLOAT) {
-  //   int e = Flags::GetExponent();
-  //   int m = Flags::GetMantissa();
-  //   a_ = BitConverter(e, m, a);
-  //   b_ = BitConverter(e, m, b);
-  // }
-  // else {
-    a_ = a;
-    b_ = b;
-  // }
-  T ans = a_ * b_;
-  if (Flags::IsSaveArithmetic()) {
-    SaveArithmetic("*", a_, b_, ans, file, line);
+  T ans = a * b;
+  if (Options::IsSaveArithmetic()) {
+    SaveArithmetic("*", a, b, ans, file, line);
   }
   return ans;
 }
 
 template<typename T>
 T division(const T a, const T b, const char* file, int line) {
-  T a_, b_;
-  // if (Flags::GetType() == CONVERT_FLOAT) {
-  //   int e = Flags::GetExponent();
-  //   int m = Flags::GetMantissa();
-  //   a_ = BitConverter(e, m, a);
-  //   b_ = BitConverter(e, m, b);
-  // }
-  // else {
-    a_ = a;
-    b_ = b;
-  // }
-  T ans = a_ / b_;
-  if (Flags::IsSaveArithmetic()) {
-    SaveArithmetic("/", a_, b_, ans, file, line);
+  T ans = a / b;
+  if (Options::IsSaveArithmetic()) {
+    SaveArithmetic("/", a, b, ans, file, line);
   }
   return ans;
 }
 
 template<typename T>
 T add(const T a, const T b, const char* file, int line) {
-  T a_, b_;
-  // if (Flags::GetType() == CONVERT_FLOAT) {
-  //   int e = Flags::GetExponent();
-  //   int m = Flags::GetMantissa();
-  //   a_ = BitConverter(e, m, a);
-  //   b_ = BitConverter(e, m, b);
-  // }
-  // else {
-    a_ = a;
-    b_ = b;
-  // }
-  T ans = a_ + b_;
-  if (Flags::IsSaveArithmetic()) {
-    SaveArithmetic("+", a_, b_, ans, file, line);
+  T ans = a + b;
+  if (Options::IsSaveArithmetic()) {
+    SaveArithmetic("+", a, b, ans, file, line);
   }
   return ans;
 }
 
 template<typename T>
 T sub(const T a, const T b, const char* file, int line) {
-  T a_, b_;
-  // if (Flags::GetType() == CONVERT_FLOAT) {
-  //   int e = Flags::GetExponent();
-  //   int m = Flags::GetMantissa();
-  //   a_ = BitConverter(e, m, a);
-  //   b_ = BitConverter(e, m, b);
-  // }
-  // else {
-    a_ = a;
-    b_ = b;
-  // }
-  T ans = a_ - b_;
-  if (Flags::IsSaveArithmetic()) {
-    SaveArithmetic("-", a_, b_, ans, file, line);
+  T ans = a - b;
+  if (Options::IsSaveArithmetic()) {
+    SaveArithmetic("-", a, b, ans, file, line);
   }
   return ans;
 }

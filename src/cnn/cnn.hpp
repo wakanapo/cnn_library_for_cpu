@@ -128,12 +128,11 @@ unsigned long CNN<T>::simple_predict(const Tensor2D<28, 28, T>& x) const {
 
 template <typename T>
 void CNN<T>::simple_save(std::string fname) {
-  std::string home = getenv("HOME");
   CnnProto::Params params;
   simple.Conv1.saveParams(&params);
   simple.Affine1.saveParams(&params);
   simple.Affine2.saveParams(&params);
-  std::fstream output(home+"/utokyo-kudohlab/cnn_library_for_cpu/data/cnn/"+fname, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::fstream output(Options::GetWeightsOutput(), std::ios::out | std::ios::trunc | std::ios::binary);
   if (!params.SerializeToOstream(&output)) {
     std::cerr << "Failed to write params." << std::endl;
   }
@@ -141,9 +140,8 @@ void CNN<T>::simple_save(std::string fname) {
 
 template <typename T>
 void CNN<T>::simple_load(std::string fname) {
-  std::string home = getenv("HOME");
   CnnProto::Params p;
-  std::fstream input(home+"/utokyo-kudohlab/cnn_library_for_cpu/data/cnn/"+fname, std::ios::in | std::ios::binary);
+  std::fstream input(Options::GetWeightsInput(), std::ios::in | std::ios::binary);
   if (!p.ParseFromIstream(&input)) {
     std::cerr << "Failed to load params." << std::endl;
   }
@@ -172,11 +170,9 @@ void CNN<T>::run() {
     for (int i = image_num*k; i < image_num*(k+1); ++i) {
       x.set_v((T*)train_X.ptr_ + i * x.size(1) * x.size(0));
       t.set_v(mnistOneHot<T>(((unsigned long*) train_y.ptr_)[i]));
-      if (Flags::IsSaveArithmetic()) {
-        std::string home = getenv("HOME");
+      if (Options::IsSaveArithmetic()) {
         std::stringstream sFile;
-        sFile << home << "/utokyo-kudohlab/cnn_library_for_cpu/data/arithmatic/10E_2_"
-              << std::setw(5) << std::setfill('0') << i << ".pb";
+        sFile << Options::GetArithmaticOutput();
         cnn.simple_train(x, t, eps);
         using namespace google::protobuf::io;
         std::ofstream output(sFile.str(), std::ofstream::out | std::ofstream::trunc
@@ -200,7 +196,7 @@ void CNN<T>::run() {
     for (int i = 0; i < 3000; ++i) {
       x.set_v((T*)test_X.ptr_ + i * x.size(1) * x.size(0));
       unsigned long y = cnn.simple_predict(x);
-      if (Flags::IsSaveArithmetic())
+      if (Options::IsSaveArithmetic())
         p.Clear();
       if (y == ((unsigned long*)test_y.ptr_)[i])
         ++cnt;
@@ -214,7 +210,7 @@ void CNN<T>::run() {
     std::cout << "Epoc: " << k << std::endl;
     std::cout << "Accuracy: " << (float)cnt / (float)3000 << std::endl;
   }
-  if (Flags::IsSaveParams())
+  if (Options::IsSaveParams())
     cnn.simple_save("float_params.pb");
   free(train_X.ptr_);
   free(train_y.ptr_);
