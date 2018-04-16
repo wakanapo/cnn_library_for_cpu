@@ -43,8 +43,6 @@ void SetFlag(std::string str, flags_type& flags) {
   std::string flag_name = std::string(str.begin() + 2, str.begin() + equal_pos);
   std::string flag_value = std::string(str.begin() + equal_pos + 1, str.end());
 
-
-    
   flags_type::iterator it = flags.find(flag_name);
   if (it == flags.end()) {
     std::cerr << "Unknown Flag: \'" << flag_name << "\' is undefined." << std::endl;
