@@ -43,13 +43,12 @@ void SetFlag(std::string str, flags_type& flags) {
   std::string flag_name = std::string(str.begin() + 2, str.begin() + equal_pos);
   std::string flag_value = std::string(str.begin() + equal_pos + 1, str.end());
 
-
-    
   flags_type::iterator it = flags.find(flag_name);
-  if (it == flags.end())
+  if (it == flags.end()) {
     std::cerr << "Unknown Flag: \'" << flag_name << "\' is undefined." << std::endl;
-  else
+  } else {
     it->second(flag_value);
+  }
 };
 
 void Options::ParseCommandLine(int argc, char* argv[]) {
@@ -59,17 +58,16 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
   }
 
   std::string mode = argv[1];
-  if (mode == "train")
+  if (mode == "train") {
     g_train = true;
-  else if (mode == "test") {
+  } else if (mode == "test") {
     if (argc < 3 || argv[2][0] == '-') {
       std::cerr << "Please set a weights input file." << std::endl;
       exit(1);
     }
     g_train=false;
     g_weights_input = argv[2];
-  }
-  else {
+  } else {
     std::cerr << "Please set mode(train/test)." << std::endl;
     exit(1);
   }
