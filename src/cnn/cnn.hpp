@@ -15,7 +15,7 @@
 #include "util/tensor.hpp"
 #include "util/function.hpp"
 #include "util/flags.hpp"
-#include "cnn/layers.hpp"
+#include "util/layers.hpp"
 #include "util/read_data.hpp"
 #include "protos/cnn_params.pb.h"
 #include "protos/arithmatic.pb.h"

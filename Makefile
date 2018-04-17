@@ -1,43 +1,52 @@
-COMPILER = clang++
-CFLAGS = -Wall -O2 -pthread
-TESTFLAGS = -lgtest_main -lgtest -lpthread
-CXXFLAGS = -std=c++14
+CXX := clang++
+PROTOC := protoc
+CXXFLAGS := -std=c++14 -Wall -O2 -pthread
+LDFLAGS := -L/usr/local/lib
+TESTFLAGS := -lgtest_main -lgtest -lpthread
 
+GTESTDIR := $(shell echo "$(HOME)")/googletest-master
+GTEST_INCLUDEDIR := $(GTESTDIR)/googletest/include
+GTEST_LIBS := $(GTESTDIR)/build/googlemock/gtest
+INCLUDES := -I./src -I./include
 BINDIR := bin
+OBJDIR := obj
+TESTDIR := test
+PROTODIR := src/protos
 
-GTESTDIR = $(shell echo "$(HOME)")/googletest-master
-GTEST_INCLUDEDIR = $(GTESTDIR)/googletest/include
-GTEST_LIBS = $(GTESTDIR)/build/googlemock/gtest
-
-INCLUDEDIR = $(shell pwd)/include
-
-SRCDIR = $(shell pwd)/src
-TESTDIR = $(shell pwd)/test
+PROTOS := $(wildcard src/protos/*.proto)
+UTILS := $(wildcard src/util/*.cc)
+CNN_SRCS := $(wildcard src/cnn/*.cc) $(UTILS) $(PROTOS:%.proto=%.pb.cc) 
+GA_SRCS := $(wildcard src/ga/*.cc) $(UTILS) $(PROTOS:%.proto=%.pb.cc)
+CNN_OBJS := $(CNN_SRCS:%.cc=$(OBJDIR)/%.o)
+GA_OBJS := $(GA_SRCS:%.cc=$(OBJDIR)/%.o)
+CNN_DEPS := $(CNN_SRCS:%.cc=%.d)
+GA_DEPS := $(GA_SRCS:%.cc=%.d)
 
 .PHONY: all
-all: $(BINDIR)/mlp $(BINDIR)/cnn $(BINDIR)/utest
+all: protoc cnn ga utest
 
-$(BINDIR)/mlp: src/mlp/mlp_main.cpp src/util/converter.cpp $(BINDIR)
-	$(COMPILER) $(CXXFLAGS) -o $@ src/mlp/mlp_main.cpp src/protos/cnn_params.pb.cc src/util/converter.cpp -I$(SRCDIR) -I$(INCLUDEDIR) $(CFLAGS) `pkg-config --cflags --libs protobuf`
+$(OBJDIR)/%.o: %.cc $(BINDIR)
+	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ -MMD $<
 
-$(BINDIR)/cnn: src/cnn/cnn_main.cpp src/protos/cnn_params.pb.cc src/protos/arithmatic.pb.cc src/util/converter.cpp src/util/flags.cpp  src/ga/set_gene.cpp $(BINDIR)
-	$(COMPILER) $(CXXFLAGS) -o $@ src/cnn/cnn_main.cpp src/protos/cnn_params.pb.cc src/protos/arithmatic.pb.cc src/util/converter.cpp src/util/flags.cpp  src/ga/set_gene.cpp -I$(SRCDIR) -I$(INCLUDEDIR) $(CFLAGS) `pkg-config --cflags --libs protobuf`
+cnn: $(CNN_OBJS) 
+	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS) `pkg-config --cflags --libs protobuf`
 
-$(BINDIR)/ga: src/protos/cnn_params.pb.cc src/protos/genom.pb.cc src/protos/arithmatic.pb.cc src/util/converter.cpp src/ga/set_gene.cpp  src/util/flags.cpp src/ga/genom.cpp $(BINDIR)
-	$(COMPILER) $(CXXFLAGS) -o $@ src/protos/cnn_params.pb.cc src/protos/arithmatic.pb.cc  src/protos/genom.pb.cc src/util/converter.cpp src/ga/set_gene.cpp  src/util/flags.cpp src/ga/genom.cpp -I$(SRCDIR) -I$(INCLUDEDIR) $(CFLAGS) `pkg-config --cflags --libs protobuf`
+ga: $(GC_OBJS)
+	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS) `pkg-config --cflags --libs protobuf`
 
-$(BINDIR)/protoc: src/protos/cnn_params.proto src/protos/arithmatic.proto src/protos/genom.proto
-	protoc -I=src/protos --cpp_out=src/protos src/protos/cnn_params.proto src/protos/arithmatic.proto src/protos/genom.proto
+protoc: $(PROTOS)
+	$(PROTOC) -I=$(PROTODIR) --cpp_out=$(PROTODIR) $^
 
-$(BINDIR)/utest: test/util_test.cpp src/util/converter.cpp src/protos/arithmatic.pb.cc  src/util/flags.cpp $(BINDIR)
-	$(COMPILER) $(CXXFLAGS) -o $@ test/util_test.cpp src/util/converter.cpp src/protos/arithmatic.pb.cc  src/util/flags.cpp -I$(GTEST_INCLUDEDIR) -I$(SRCDIR) -I$(INCLUDEDIR) -L$(GTEST_LIBDIR) $(CFLAGS) $(TESTFLAGS) `pkg-config --cflags --libs protobuf`
+utest: test/util_test.cpp src/util/converter.cpp src/protos/arithmatic.pb.cc  src/util/flags.cpp 
+	$(CXX) $(CXXFLAGS) -o $(BINDIR)/$@ $^ -I$(GTEST_INCLUDEDIR) -I$(INCLUDES) -L$(GTEST_LIBDIR) $(TESTFLAGS) `pkg-config --cflags --libs protobuf`
 
-src/protos/%.pb.cc: src/protos/%.proto
-	protoc -I=src/protos --cpp_out=src/protos $<
+-include $(CNN_DEPS) $(GA_DEPS)
 
 .PHONY: clean
 clean:
-	rm -rf $(BINDIR)/utest $(BINDIR)/mlp $(BINDIR)/cnn/float $(BINDIR)/cnn test/util_test.o src/mlp/mlp_main.o src/cnn/cnn_main.o src/cnn/float/cnn_main.o src/util/flags.o $(BINDIR)
+	rm -rf $(BINDIR) $(OBJDIR)
 
 $(BINDIR):
 	mkdir -p $(BINDIR)
+
