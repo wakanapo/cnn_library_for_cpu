@@ -141,7 +141,8 @@ void GeneticAlgorithm::save(std::string filename) {
     }
     g->set_evaluation(genom.getEvaluation());
   }
-  std::fstream output(home+"/utokyo-kudohlab/cnn_library_for_cpu/data/"+filename+".pb",
+
+  std::fstream output(filename+".pb",
                       std::ios::out | std::ios::trunc | std::ios::binary);
   if (!gs.SerializeToOstream(&output))
     std::cerr << "Failed to save genoms." << std::endl;
