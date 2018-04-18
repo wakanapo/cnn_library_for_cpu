@@ -141,6 +141,7 @@ void GeneticAlgorithm::save(std::string filename) {
     }
     g->set_evaluation(genom.getEvaluation());
   }
+
   std::fstream output(filename+".pb",
                       std::ios::out | std::ios::trunc | std::ios::binary);
   if (!gs.SerializeToOstream(&output))
