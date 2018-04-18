@@ -36,6 +36,7 @@ src/protos/__pycache__/
 src/python/.ipynb_checkpoints/
 experiment/.ipynb_checkpoints/
 data/arithmatic/
+data/cifar-100-binary
 
 *.pb.cc
 *.pb.h
