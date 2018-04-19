@@ -20,27 +20,21 @@
 #include "protos/cnn_params.pb.h"
 #include "protos/arithmatic.pb.h"
 
-template<typename T>
-class Model {
-public:
-  virtual void train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps) = 0;
-  virtual unsigned long predict(T* x_ptr, int i) const = 0;
-  virtual void save(std::string fname) = 0;
-  virtual void load(std::string fname) = 0;
-  virtual Dataset<T> readData(Status st) = 0;
-};
 
 template <typename T>
-class SimpleConvNet : public Model<T> {
+class SimpleConvNet {
 public:
+  using Type = T;
+  using InputType = Tensor2D<28, 28, T>;
+  using OutputType = Tensor1D<10, T>;
   SimpleConvNet() : Conv1(Convolution<5, 5, 1, 30, 0, 1, T>(-0.1, 0.1)),
                     Affine1(Affine<12*12*30, 100, T>(-0.1, 0.1)),
                     Affine2(Affine<100, 10, T>(-0.1, 0.1)) {};
-  void train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps);
-  unsigned long predict(T* x_ptr, int i) const;
+  void train(const InputType& x, const OutputType& t, const T& eps);
+  unsigned long predict(const InputType& x) const;
   void save(std::string fname);
   void load(std::string fname);
-  Dataset<T> readData(Status st);
+  Dataset<InputType, OutputType> readData(Status st);
 private:
   Convolution<5, 5, 1, 30, 0, 1, T> Conv1;
   Relu<T> Relu1;
@@ -53,12 +47,9 @@ private:
 
 
 template <typename T>
-void SimpleConvNet<T>::train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps) {
-  Tensor2D<28, 28, T> x;
-  Tensor1D<10, T> t;
-  x.set_v(x_ptr + i*x.size());
-  t.set_v(OneHot<T>(t_ptr[i], t.size()));
-  
+void SimpleConvNet<T>::train(const typename SimpleConvNet<T>::InputType& x,
+                             const typename SimpleConvNet<T>::OutputType& t,
+                             const T& eps) {
   // forward
   Tensor3D<24, 24, 30, T> conv1_ans;
   Conv1.forward(x, &conv1_ans);
@@ -101,10 +92,7 @@ void SimpleConvNet<T>::train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps
 }
 
 template <typename T>
-unsigned long SimpleConvNet<T>::predict(T* x_ptr, int i) const{
-  Tensor2D<28, 28, T> x;
-  x.set_v(x_ptr + i*x.size());
-
+unsigned long SimpleConvNet<T>::predict(const SimpleConvNet<T>::InputType& x) const{
   Tensor3D<24, 24, 30, T> conv1_ans;
   Conv1.forward(x, &conv1_ans);
 
@@ -161,22 +149,26 @@ void SimpleConvNet<T>::load(std::string fname) {
 }
 
 template<typename T>
-Dataset<T> SimpleConvNet<T>::readData(Status st) {
-  return std::move(ReadMNISTData<T>(st));
+Dataset<typename SimpleConvNet<T>::InputType, typename SimpleConvNet<T>::OutputType>
+SimpleConvNet<T>::readData(Status st) {
+  return std::move(ReadMNISTData<InputType, OutputType>(st));
 }
 
 template <typename T>
-class SmallCNNForCifar : public Model<T> {
+class SmallCNNForCifar {
 public:
+  using Type = T;
+  using InputType = Tensor3D<32, 32, 3, T>;
+  using OutputType = Tensor1D<100, T>;
   SmallCNNForCifar() : Conv1(Convolution<3, 3, 3, 32, 0, 1, T>(-0.1, 0.1)),
                        Conv2(Convolution<3, 3, 32, 32, 0, 1, T>(-0.1, 0.1)),
                        Conv3(Convolution<3, 3, 32, 64, 0, 1, T>(-0.1, 0.1)),
                        Affine1(Affine<5*5*64, 100, T>(-0.1, 0.1)) {};
-  void train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps);
-  unsigned long predict(T* x_ptr, int i) const;
+  void train(const InputType& x, const OutputType& t, const T& eps);
+  unsigned long predict(const InputType& x) const;
   void save(std::string fname);
   void load(std::string fname);
-  Dataset<T> readData(Status st);
+  Dataset<InputType, OutputType> readData(Status st);
 private:
   Convolution<3, 3, 3, 32, 0, 1, T> Conv1;
   Relu<T> Relu1;
@@ -193,12 +185,9 @@ private:
 
 
 template <typename T>
-void SmallCNNForCifar<T>::train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps) {
-  Tensor3D<32, 32, 3, T> x;
-  Tensor1D<100, T> t;
-  x.set_v(x_ptr + i*x.size());
-  t.set_v(OneHot<T>(t_ptr[i], t.size()));
-  
+void SmallCNNForCifar<T>::train(const typename SmallCNNForCifar<T>::InputType& x,
+                                const typename SmallCNNForCifar<T>::OutputType& t,
+                                const T& eps) {
   // forward
   Tensor3D<30, 30, 32, T> conv1_ans;
   Conv1.forward(x, &conv1_ans);
@@ -254,10 +243,8 @@ void SmallCNNForCifar<T>::train(T* x_ptr, unsigned long* t_ptr, int i, const T& 
 }
 
 template <typename T>
-unsigned long SmallCNNForCifar<T>::predict(T* x_ptr, int i) const {
-  Tensor3D<32, 32, 3, T> x;
-  x.set_v(x_ptr + i*x.size());
-  
+unsigned long SmallCNNForCifar<T>
+::predict(const typename SmallCNNForCifar<T>::InputType& x) const {
   Tensor3D<30, 30, 32, T> conv1_ans;
   Conv1.forward(x, &conv1_ans);
   Relu1.forward(&conv1_ans);
@@ -322,23 +309,28 @@ void SmallCNNForCifar<T>::load(std::string fname) {
 }
 
 template<typename T>
-Dataset<T> SmallCNNForCifar<T>::readData(Status st) {
-  return ReadCifar100Data<T>(st, FINE);
+Dataset<typename SmallCNNForCifar<T>::InputType, typename SmallCNNForCifar<T>::OutputType>
+SmallCNNForCifar<T>::readData(Status st) {
+  return ReadCifar100Data<InputType, OutputType>(st, FINE);
 }
 
-template <typename T>
+template <typename ModelType>
 class CNN {
 public:
-  static void training(Model<T> model);
-  static void inference(Model<T> model);
+  using Type = typename ModelType::Type;
+  using InputType = typename ModelType::InputType;
+  using OutputType = typename ModelType::OutputType;
+  static void training();
+  static void inference();
 };
 
-template <typename T>
-void CNN<T>::training(Model<T> model) {
-  Dataset<T> train = model.readData(TRAIN);
-  Dataset<T> test = model.readData(TEST);
+template <typename ModelType>
+void CNN<ModelType>::training() {
+  ModelType model;
+  Dataset<InputType, OutputType> train = model.readData(TRAIN);
+  Dataset<InputType, OutputType> test = model.readData(TEST);
 
-  T eps = (T)0.01;
+  Type eps = (Type)0.01;
   int epoch = 20;
   int image_num = 1000;
 
@@ -347,7 +339,7 @@ void CNN<T>::training(Model<T> model) {
       if (Options::IsSaveArithmetic()) {
         std::stringstream sFile;
         sFile << Options::GetArithmaticOutput();
-        model.train(train.images.ptr_, train.labels.ptr_, i, eps);
+        model.train(train.images[i], train.labels[i], eps);
         using namespace google::protobuf::io;
         std::ofstream output(sFile.str(), std::ofstream::out | std::ofstream::trunc
                              | std::ofstream::binary);
@@ -362,16 +354,16 @@ void CNN<T>::training(Model<T> model) {
         p.Clear();
       }
       else {
-        model.train(train.images.ptr_, train.labels.ptr_, i, eps);
+        model.train(train.images[i], train.labels[i], eps);
       }
     }
     int cnt = 0;
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < 3000; ++i) {
-      unsigned long y = model.predict(test.images.ptr_, i);
+      unsigned long y = model.predict(test.images[i]);
       if (Options::IsSaveArithmetic())
         p.Clear();
-      if (y == test.labels.ptr_[i])
+      if (OneHot<OutputType>(y) == test.labels[i])
         ++cnt;
     }
     auto end = std::chrono::system_clock::now();
@@ -385,23 +377,19 @@ void CNN<T>::training(Model<T> model) {
   }
   if (Options::IsSaveParams())
     model.save("float_params.pb");
-  free(train.images.ptr_);
-  free(train.labels.ptr_);
-
-  free(test.images.ptr_);
-  free(test.images.ptr_);
 }
 
-template <typename T>
-void CNN<T>::inference(Model<T> model) {
-  Dataset<T> test = model.readData(TEST);
+template <typename ModelType>
+void CNN<ModelType>::inference() {
+  ModelType model;
+  Dataset<InputType, OutputType> test = model.readData(TEST);
 
   model.load("float_params.pb");
   int cnt = 0;
   auto start = std::chrono::system_clock::now();
   for (int i = 0; i < 3000; ++i) {
-    unsigned long y = model.predict(test.images.ptr_, i);
-    if (y == test.labels.ptr_[i])
+    unsigned long y = model.predict(test.images[i]);
+    if (OneHot<OutputType>(y) == test.labels[i])
       ++cnt;
   }
   auto end = std::chrono::system_clock::now();
@@ -411,9 +399,6 @@ void CNN<T>::inference(Model<T> model) {
             << " microsec."
             << std::endl;
   std::cout << "Accuracy: " << (float)cnt / (float)3000 << std::endl;
-  
-  free(test.images.ptr_);
-  free(test.labels.ptr_);
 }
 
 

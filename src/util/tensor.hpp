@@ -34,6 +34,7 @@ public:
   operator-(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const;
   Tensor<dim1, dim2, dim3, dim4, dim5, T>
   operator*(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const;
+  bool operator==(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const;
   Tensor<dim1, dim2, dim3, dim4, dim5, T>
   times(const T& other) const;
   Tensor<dim2, dim1, dim3, dim4, dim5, T>
@@ -144,6 +145,16 @@ Tensor<dim1, dim2, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>
     ans[i] = MUL(v_[i], y[i]);
   }
   return std::move(ans);
+}
+
+template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
+bool Tensor<dim1, dim2, dim3, dim4, dim5, T>
+::operator==(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const {
+  for (int i = 0; i < kSize; ++i) {
+    if (this->v_[i] != other.v_[i])
+      return false;
+  }
+  return true;
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>

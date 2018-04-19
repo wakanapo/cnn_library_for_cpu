@@ -10,18 +10,16 @@ using half_float::half;
 int main(int argc, char* argv[]) {
   Options::ParseCommandLine(argc, argv);
   if (Options::GetType() == HALF) {
-    SmallCNNForCifar<half> model;
     if (Options::IsTrain())
-      CNN<half>::training(model);
+      CNN<SmallCNNForCifar<half>>::training();
     else
-      CNN<half>::inference(model);
+      CNN<SmallCNNForCifar<half>>::inference();
   }
   else {
-    SmallCNNForCifar<float> model;
     if (Options::IsTrain())
-      CNN<float>::training(model);
+      CNN<SmallCNNForCifar<float>>::training();
     else
-      CNN<float>::inference(model);
+      CNN<SmallCNNForCifar<float>>::inference();
   }
   return 0;
 }
