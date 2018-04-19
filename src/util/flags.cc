@@ -37,7 +37,7 @@ void SetFlag(std::string str, flags_type& flags) {
   std::string::size_type equal_pos = str.find("=");
   if (equal_pos == std::string::npos || (str[0] != '-' && str[1] != '-')) {
     std::cerr << "Flag Syntax Error: Cannot parse flags." << std::endl;
-    std::cerr << "===Usage===\n ./bin/cnn --flag1=hoge --flag2==fuga" << std::endl;
+    std::cerr << "===Usage===\n ./bin/cnn MODE --flag1=hoge --flag2==fuga" << std::endl;
     exit(1);
   }
   std::string flag_name = std::string(str.begin() + 2, str.begin() + equal_pos);

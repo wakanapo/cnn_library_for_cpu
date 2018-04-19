@@ -32,8 +32,8 @@ public:
                     Affine2(Affine<100, 10, T>(-0.1, 0.1)) {};
   void train(const InputType& x, const OutputType& t, const T& eps);
   unsigned long predict(const InputType& x) const;
-  void save(std::string fname);
-  void load(std::string fname);
+  void save();
+  void load();
   Dataset<InputType, OutputType> readData(Status st);
 private:
   Convolution<5, 5, 1, 30, 0, 1, T> Conv1;
@@ -125,7 +125,7 @@ unsigned long SimpleConvNet<T>::predict(const SimpleConvNet<T>::InputType& x) co
 }
 
 template <typename T>
-void SimpleConvNet<T>::save(std::string fname) {
+void SimpleConvNet<T>::save() {
   CnnProto::Params params;
   Conv1.saveParams(&params);
   Affine1.saveParams(&params);
@@ -137,7 +137,7 @@ void SimpleConvNet<T>::save(std::string fname) {
 }
 
 template <typename T>
-void SimpleConvNet<T>::load(std::string fname) {
+void SimpleConvNet<T>::load() {
   CnnProto::Params p;
   std::fstream input(Options::GetWeightsInput(), std::ios::in | std::ios::binary);
   if (!p.ParseFromIstream(&input)) {
@@ -166,8 +166,8 @@ public:
                        Affine1(Affine<5*5*64, 100, T>(-0.1, 0.1)) {};
   void train(const InputType& x, const OutputType& t, const T& eps);
   unsigned long predict(const InputType& x) const;
-  void save(std::string fname);
-  void load(std::string fname);
+  void save();
+  void load();
   Dataset<InputType, OutputType> readData(Status st);
 private:
   Convolution<3, 3, 3, 32, 0, 1, T> Conv1;
@@ -283,7 +283,7 @@ unsigned long SmallCNNForCifar<T>
 }
 
 template <typename T>
-void SmallCNNForCifar<T>::save(std::string fname) {
+void SmallCNNForCifar<T>::save() {
   CnnProto::Params params;
   Conv1.saveParams(&params);
   Conv2.saveParams(&params);
@@ -296,7 +296,7 @@ void SmallCNNForCifar<T>::save(std::string fname) {
 }
 
 template <typename T>
-void SmallCNNForCifar<T>::load(std::string fname) {
+void SmallCNNForCifar<T>::load() {
   CnnProto::Params p;
   std::fstream input(Options::GetWeightsInput(), std::ios::in | std::ios::binary);
   if (!p.ParseFromIstream(&input)) {
@@ -376,7 +376,7 @@ void CNN<ModelType>::training() {
     std::cout << "Accuracy: " << (float)cnt / (float)3000 << std::endl;
   }
   if (Options::IsSaveParams())
-    model.save("float_params.pb");
+    model.save();
 }
 
 template <typename ModelType>
@@ -384,7 +384,7 @@ void CNN<ModelType>::inference() {
   ModelType model;
   Dataset<InputType, OutputType> test = model.readData(TEST);
 
-  model.load("float_params.pb");
+  model.load();
   int cnt = 0;
   auto start = std::chrono::system_clock::now();
   for (int i = 0; i < 3000; ++i) {
