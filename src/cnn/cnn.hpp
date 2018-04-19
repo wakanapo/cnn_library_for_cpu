@@ -152,11 +152,11 @@ void CNN<T>::simple_load(std::string fname) {
 
 template <typename T>
 void CNN<T>::run() {
-  const Data train_X = ReadMnistImages<T>(TRAIN);
-  const Data train_y = ReadMnistLabels(TRAIN);
+  const Data<T> train_X = ReadMnistImages<T>(TRAIN);
+  const Data<unsigned long> train_y = ReadMnistLabels(TRAIN);
 
-  const Data test_X = ReadMnistImages<T>(TEST);
-  const Data test_y = ReadMnistLabels(TEST);
+  const Data<T> test_X = ReadMnistImages<T>(TEST);
+  const Data<unsigned long> test_y = ReadMnistLabels(TEST);
 
   Tensor2D<28, 28, T> x;
   Tensor1D<10, T> t;
@@ -168,8 +168,8 @@ void CNN<T>::run() {
 
   for (int k = 0; k < epoch; ++k) {
     for (int i = image_num*k; i < image_num*(k+1); ++i) {
-      x.set_v((T*)train_X.ptr_ + i * x.size(1) * x.size(0));
-      t.set_v(mnistOneHot<T>(((unsigned long*) train_y.ptr_)[i]));
+      x.set_v(train_X.ptr_ + i * x.shape()[1] * x.shape()[0]);
+      t.set_v(mnistOneHot<T>(train_y.ptr_[i]));
       if (Options::IsSaveArithmetic()) {
         std::stringstream sFile;
         sFile << Options::GetArithmaticOutput();
@@ -194,11 +194,11 @@ void CNN<T>::run() {
     int cnt = 0;
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < 3000; ++i) {
-      x.set_v((T*)test_X.ptr_ + i * x.size(1) * x.size(0));
+      x.set_v(test_X.ptr_ + i * x.shape()[1] * x.shape()[0]);
       unsigned long y = cnn.simple_predict(x);
       if (Options::IsSaveArithmetic())
         p.Clear();
-      if (y == ((unsigned long*)test_y.ptr_)[i])
+      if (y == test_y.ptr_[i])
         ++cnt;
     }
     auto end = std::chrono::system_clock::now();
@@ -221,8 +221,8 @@ void CNN<T>::run() {
 
 template <typename T>
 void CNN<T>::inference() {
-  const Data test_X = ReadMnistImages<T>(TEST);
-  const Data test_y = ReadMnistLabels(TEST);
+  const Data<T> test_X = ReadMnistImages<T>(TEST);
+  const Data<unsigned long> test_y = ReadMnistLabels(TEST);
 
   Tensor2D<28, 28, T> x;
   CNN<T> cnn;
@@ -230,9 +230,9 @@ void CNN<T>::inference() {
   int cnt = 0;
   auto start = std::chrono::system_clock::now();
   for (int i = 0; i < 3000; ++i) {
-    x.set_v((T*)test_X.ptr_ + i * x.size(1) * x.size(0));
+    x.set_v(test_X.ptr_ + i * x.shape()[1] * x.shape()[0]);
     unsigned long y = cnn.simple_predict(x);
-    if (y == ((unsigned long*)test_y.ptr_)[i])
+    if (y == test_y.ptr_[i])
       ++cnt;
   }
   auto end = std::chrono::system_clock::now();

@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <memory>
+
+#include "util/flags.hpp"
 
 namespace {
   const char* kMnistTestImageFilePath = "data/mnist/t10k-images-idx3-ubyte";
@@ -10,19 +13,23 @@ namespace {
   const char* kMnistTrainLabelFilePath = "data/mnist/train-labels.idx1-ubyte";
   const int kExpectImageMagicNumber = 2051;
   const int kExpectLabelMagicNumber = 2049;
+
+  const char* kCifar100TestDataFilePath = "data/cihar-100-binary/test.bin";
+  const char* kCifar100TrainDataFilePath = "data/cihar-100-binary/test.bin";
 }
 
-enum Status {
+enum status {
   TRAIN,
   TEST
 };
 
+template<typename T>
 class Data {
 public:
-  Data(int col, int row, void* ptr) : col_(col), row_(row), ptr_(ptr) {};
-  const int col_;
-  const int row_;
-  void* ptr_;
+  Data(int row, int col, T* ptr) : row_(row), col_(col), ptr_(ptr) {};
+  int row_;
+  int col_;
+  T* ptr_;
 };
 
 int ConvertEndian(int i) {
@@ -35,9 +42,9 @@ int ConvertEndian(int i) {
 }
 
 template<typename T>
-Data ReadMnistImages(Status st) {
-  FILE *fp = (st == TEST) ? fopen(kMnistTestImageFilePath, "rb") :
-    fopen(kMnistTrainImageFilePath, "rb");
+Data<T> ReadMnistImages(status st) {
+  FILE *fp = (st == TRAIN) ? fopen(kMnistTrainImageFilePath, "rb") :
+    fopen(kMnistTestImageFilePath, "rb");
   if (fp == NULL) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
@@ -66,24 +73,24 @@ Data ReadMnistImages(Status st) {
   T* datasets =
     (T*)malloc(sizeof(T) * number_of_images * image_size);
   for (int n = 0; n < number_of_images; ++n) {
-    for (int i = 0; i < number_of_rows; ++i) {
-      for (int j = 0; j < number_of_cols; ++j) {
+    for (int i = 0; i < number_of_cols; ++i) {
+      for (int j = 0; j < number_of_rows; ++j) {
         unsigned char temp = 0;
         err = fread(&temp, sizeof(temp), 1, fp);
         if (err < 1)
           std::cerr << "File read error!" << std::endl;
-        datasets[n * image_size + i * number_of_cols + j] = (T)temp / 255.0;
+        datasets[n * image_size + i * number_of_rows + j] = (T)temp / 255.0;
       }
     }
   }
   fclose(fp);
-  Data images(number_of_images, image_size, datasets);
+  Data<T> images(image_size, number_of_images, datasets);
   return images;
 }
 
-Data ReadMnistLabels(Status st) {
-  FILE *fp = (st == TEST) ? fopen(kMnistTestLabelFilePath, "rb") :
-    fopen(kMnistTrainLabelFilePath, "rb");
+Data<unsigned long> ReadMnistLabels(status st) {
+  FILE *fp = (st == TRAIN) ? fopen(kMnistTrainLabelFilePath, "rb") :
+    fopen(kMnistTestLabelFilePath, "rb");
   if (fp == NULL) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
@@ -110,7 +117,7 @@ Data ReadMnistLabels(Status st) {
     datasets[i] = (unsigned long)temp;
   }
   fclose(fp);
-  Data labels(1, number_of_labels, datasets);
+  Data<unsigned long> labels(1, number_of_labels, datasets);
   return labels;
 }
 
@@ -121,4 +128,42 @@ T* mnistOneHot(unsigned long t) {
     onehot[i] = (i == (int)t) ? 1 : 0;
   }
   return onehot;
+}
+
+template<typename T>
+Data<T> ReadCifar100Data(status st) {
+  FILE *fp = (st == TRAIN) ? fopen(kCifar100TrainDataFilePath, "rb") :
+    fopen(kCifar100TestDataFilePath, "rb");
+  if (fp == NULL) {
+    std::cerr << "File open error!!" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  int number_of_images = (st == TRAIN) ? 50000 : 10000;
+  int number_of_rows = 32;
+  int number_of_cols = 32;
+  int number_of_channels = 3;
+
+  int image_2d = number_of_rows * number_of_cols;
+  int image_3d = number_of_rows * number_of_cols * number_of_channels;
+
+  T* datasets =
+    (T*)malloc(sizeof(T) * number_of_images * image_3d);
+  for (int n = 0; n < number_of_images; ++n) {
+    for (int i = 0; i < number_of_channels; ++i) {
+      for (int j = 0; j < number_of_cols; ++j) {
+        for (int k = 0; k < number_of_rows; ++k) {
+          unsigned char temp = 0;
+          size_t err = fread(&temp, sizeof(temp), 1, fp);
+          if (err < 1)
+            std::cerr << "File read error!" << std::endl;
+          datasets[n * image_3d + i * image_2d + j * number_of_rows + k]
+            = (T)temp / 255.0;
+        }
+      }
+    }
+  }
+  fclose(fp);
+  Data<T> images(image_3d, number_of_images, datasets);
+  return images;
 }

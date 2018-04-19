@@ -86,9 +86,9 @@ void Convolution<w_row, w_col, input, output, P, S, T>
            const Tensor3D<x_row, x_col, input, T>& x, const T& eps) {
   Tensor4D<w_row, w_col, input, output, T> delta_w;
   delta_w.init();
-  const int* w_dim = w_.shape();
-  const int* d_dim = delta.shape();
-  const int* x_dim = x.shape();
+  Shape w_dim = w_.shape();
+  Shape d_dim = delta.shape();
+  Shape x_dim = x.shape();
   for (int i = 0; i < w_dim[3]; ++i)
     for (int j = 0; j < w_dim[2]; ++j)
       for (int k = 0; k < w_dim[1]; ++k)
@@ -114,10 +114,10 @@ void Convolution<w_row, w_col, input, output, P, S, T>
            const Tensor3D<x_row, x_col, input, T>& x, const T& eps) {
   Tensor1D<output, T> delta_b;
   delta_b.init();
-  for (int i = 0; i < delta.size(2); ++i)
-    for (int j = 0; j < delta.size(1); ++j)
-      for (int h = 0; h < delta.size(0); ++h)
-        delta_b[i] = ADD(delta_b[i], delta[i*delta.size(0)*delta.size(1) + j*delta.size(0) + h]);
+  for (int i = 0; i < delta.shape()[2]; ++i)
+    for (int j = 0; j < delta.shape()[1]; ++j)
+      for (int h = 0; h < delta.shape()[0]; ++h)
+        delta_b[i] = ADD(delta_b[i], delta[i*delta.shape()[0]*delta.shape()[1] + j*delta.shape()[0] + h]);
 
   delta_b = delta_b.times(eps);
   b_ = b_ - delta_b;
@@ -151,9 +151,9 @@ void Pooling<k_row, k_col, P, S, T>
 template<int k_row, int k_col, int P, int S, typename T>
 template<int dim1, int dim2, int dim3>
 void Pooling<k_row, k_col, P, S, T>
-::backward(const Tensor3D<(dim1+2*P-k_row)/S+1, (dim2+2*P-k_col)/S+1, dim3, T> &delta,
-           const Tensor1D<((dim1+2*P-k_row)/S+1) * ((dim2+2*P-k_col)/S+1) * dim3, int> &idx,
-           Tensor3D<dim1, dim2, dim3, T> *ans) const {
+::backward(const Tensor3D<(dim1+2*P-k_row)/S+1, (dim2+2*P-k_col)/S+1, dim3, T>& delta,
+           const Tensor1D<((dim1+2*P-k_row)/S+1) * ((dim2+2*P-k_col)/S+1) * dim3, int>& idx,
+           Tensor3D<dim1, dim2, dim3, T>* ans) const {
   Function::depool(delta, idx, ans);
 }
 
@@ -191,7 +191,7 @@ void Affine<input, output, T>
 }
 
 template<int input, int output, typename T>
-void Affine<input, output, T>::saveParams(CnnProto::Params *p) const {
+void Affine<input, output, T>::saveParams(CnnProto::Params* p) const {
   CnnProto::Weight* w = p->add_weights();
   CnnProto::Bias* b = p->add_biases();
   for (int i = 0; i < w_.size(); ++i)
@@ -202,7 +202,7 @@ void Affine<input, output, T>::saveParams(CnnProto::Params *p) const {
 
 template<int input, int output, typename T>
 void Affine<input, output, T>
-::forward(const Tensor1D<input, T> &x, Tensor1D<output, T> *ans) const {
+::forward(const Tensor1D<input, T>& x, Tensor1D<output, T>* ans) const {
   Function::matmul(x, w_, ans);
   *ans = *ans + b_;
 }
@@ -232,7 +232,7 @@ void Affine<input, output, T>
 
 template<int input, int output, typename T>
 void Affine<input, output, T>
-::backward(const Tensor1D<output, T> &delta, const Tensor1D<input, T> &x, Tensor1D<input, T> *ans, const T& eps) {
+::backward(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x, Tensor1D<input, T>* ans, const T& eps) {
   Tensor2D<input, output, T> w_t = w_.transpose();
   Function::matmul(delta, w_t, ans);
   update_w(delta, x, ans, eps);
@@ -257,9 +257,9 @@ void Relu<T>::forward(Tensor3D<dim1, dim2, dim3, T>* x) const {
 
 template<typename T>
 template<int dim1, int dim2, int dim3>
-void Relu<T>::backward(Tensor3D<dim1, dim2, dim3, T> *delta,
-                       const Tensor3D<dim1, dim2, dim3, T> &x) const {
-  Tensor3D<dim1, dim2, dim3, T> tmp = x.make_clone();
+void Relu<T>::backward(Tensor3D<dim1, dim2, dim3, T>* delta,
+                       const Tensor3D<dim1, dim2, dim3, T>& x) const {
+  Tensor3D<dim1, dim2, dim3, T> tmp = x;
   Function::deriv_ReLU(&tmp);
   (*delta) = (*delta) * tmp;
 }
@@ -282,9 +282,9 @@ void Sigmoid<T>::forward(Tensor3D<dim1, dim2, dim3, T>* x) const {
 
 template<typename T>
 template<int dim1, int dim2, int dim3>
-void Sigmoid<T>::backward(Tensor3D<dim1, dim2, dim3, T> *delta,
-                          const Tensor3D<dim1, dim2, dim3, T> &x) const {
-  Tensor3D<dim1, dim2, dim3, T> tmp = x.make_clone();
+void Sigmoid<T>::backward(Tensor3D<dim1, dim2, dim3, T>* delta,
+                          const Tensor3D<dim1, dim2, dim3, T>& x) const {
+  Tensor3D<dim1, dim2, dim3, T> tmp = x;
   Function::deriv_sigmoid(&tmp);
   (*delta) = (*delta) * tmp;
 }
@@ -307,9 +307,9 @@ void Softmax<T>::forward(Tensor3D<dim1, dim2, dim3, T>* x) const {
 
 template<typename T>
 template<int dim1, int dim2, int dim3>
-void Softmax<T>::backward(Tensor3D<dim1, dim2, dim3, T> *delta,
-                          const Tensor3D<dim1, dim2, dim3, T> &x) const {
-  Tensor3D<dim1, dim2, dim3, T> tmp = x.make_clone();
+void Softmax<T>::backward(Tensor3D<dim1, dim2, dim3, T>* delta,
+                          const Tensor3D<dim1, dim2, dim3, T>& x) const {
+  Tensor3D<dim1, dim2, dim3, T> tmp = x;
   Function::deriv_softmax(&tmp);
   (*delta) = (*delta) * tmp;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdio>
 #include <cstring>
 #include <cfloat>
@@ -99,8 +100,8 @@ void Function::deriv_sigmoid(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Function::softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
-  int col = t->size(1);
-  int row = t->size(0);
+  int col = t->shape()[1];
+  int row = t->shape()[0];
   T* v = t->get_v();
   for (int l = 0; l < t->size() / (col * row); ++l) {
     for (int k = 0; k < col; ++k) {
@@ -117,8 +118,8 @@ void Function::softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Function::deriv_softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T> *t) {
-  int col = t->size(1);
-  int row = t->size(0);
+  int col = t->shape()[1];
+  int row = t->shape()[0];
   T* v = t->get_v();
   for (int l = 0; l < t->size() / (col * row); ++l) {
     for (int k = 0; k < col; ++k) {
@@ -140,10 +141,10 @@ template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
 void Function::matmul(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
                       const Tensor<dim1_p, dim2_p, dim3, dim4, dim5, T>& m,
                       Tensor<dim1_p, dim2, dim3, dim4, dim5, T>* ans) {
-  int t_col = t.size(1);
-  int t_row = t.size(0);
-  int m_col = m.size(1);
-  int m_row = m.size(0);
+  int t_col = t.shape()[1];
+  int t_row = t.shape()[0];
+  int m_col = m.shape()[1];
+  int m_row = m.shape()[0];
   if (m_col != t_row) {
     std::cout << "Dimensional Error!" << std::endl;
     abort();
@@ -166,9 +167,9 @@ void Function::conv2d(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
                       Tensor<a_row, a_col, out, dim4, dim5, T> *ans,
                       int p, int s) {
   ans->init();
-  const int* ans_dim = ans->shape();
-  const int* w_dim = w.shape();
-  const int* dim = t.shape();
+  Shape ans_dim = ans->shape();
+  Shape w_dim = w.shape();
+  Shape dim = t.shape();
   for (int k = 0; k < ans_dim[2]; ++k)
     for (int i = 0; i < ans_dim[1]; ++i)
       for (int j = 0; j < ans_dim[0]; ++j)
@@ -194,9 +195,9 @@ void Function::deconv2d(const Tensor<a_row, a_col, out, dim4, dim5, T>& conv,
   Function::padding(conv, &pad_conv, pad_size);
 
   ans->init();
-  const int* ans_dim = ans->shape();
-  const int* w_dim = w.shape();
-  const int* dim = pad_conv.shape();
+  Shape ans_dim = ans->shape();
+  Shape w_dim = w.shape();
+  Shape dim = pad_conv.shape();
   for (int k = 0; k < ans_dim[2]; ++k)
     for (int i = 0; i < ans_dim[1]; ++i)
       for (int j = 0; j < ans_dim[0]; ++j)
@@ -218,8 +219,8 @@ void Function::max_pool(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
                         Tensor<a_row, a_col, dim3, dim4, dim5, T>* ans,
                         Tensor<a_row*a_col*dim3*dim4*dim5, 1, 1, 1, 1, int>* idx,
                         int p, int s) {
-  const int* ans_dim = ans->shape();
-  const int* dim = t.shape();
+  Shape ans_dim = ans->shape();
+  Shape dim = t.shape();
   for (int k = 0; k < ans_dim[2]; ++k) {
     for (int i = 0; i < ans_dim[1]; ++i) {
       for (int j = 0; j < ans_dim[0]; ++j){
@@ -264,13 +265,13 @@ template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
 void Function::padding(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& before,
                        Tensor<dim1_p, dim2_p, dim3, dim4, dim5, T>* ans, int p) {
   ans->init();
-  int col = before.size(1);
-  int row = before.size(0);
+  int col = before.shape()[1];
+  int row = before.shape()[0];
   for (int k = 0; k < before.size() / (col*row); ++k) {
     for (int i = 0; i < col; ++i) {
       for (int j = 0; j < row; ++j) {
-        (*ans)[k*ans->size(1)*ans->size(0)
-               + (i+p)*ans->size(0) + (j+p)]
+        (*ans)[k*ans->shape()[1]*ans->shape()[0]
+               + (i+p)*ans->shape()[0] + (j+p)]
           = before[k*col*row + i*row + j];
       }
     }
