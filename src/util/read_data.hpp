@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <tuple>
 #include <memory>
 
 #include "util/flags.hpp"
@@ -18,7 +19,7 @@ namespace {
   const char* kCifar100TrainDataFilePath = "data/cihar-100-binary/test.bin";
 }
 
-enum status {
+enum Status {
   TRAIN,
   TEST
 };
@@ -32,6 +33,12 @@ public:
   T* ptr_;
 };
 
+template<typename T>
+struct Dataset {
+  Data<T> images;
+  Data<unsigned long> labels;
+};
+
 int ConvertEndian(int i) {
   unsigned char c1, c2, c3, c4;
   c1 = i & 255;
@@ -42,7 +49,7 @@ int ConvertEndian(int i) {
 }
 
 template<typename T>
-Data<T> ReadMnistImages(status st) {
+Data<T> ReadMnistImages(Status st) {
   FILE *fp = (st == TRAIN) ? fopen(kMnistTrainImageFilePath, "rb") :
     fopen(kMnistTestImageFilePath, "rb");
   if (fp == NULL) {
@@ -88,7 +95,7 @@ Data<T> ReadMnistImages(status st) {
   return images;
 }
 
-Data<unsigned long> ReadMnistLabels(status st) {
+Data<unsigned long> ReadMnistLabels(Status st) {
   FILE *fp = (st == TRAIN) ? fopen(kMnistTrainLabelFilePath, "rb") :
     fopen(kMnistTestLabelFilePath, "rb");
   if (fp == NULL) {
@@ -122,16 +129,26 @@ Data<unsigned long> ReadMnistLabels(status st) {
 }
 
 template<typename T>
-T* mnistOneHot(unsigned long t) {
-  T* onehot = (T*)malloc(10*sizeof(T));
-  for (int i = 0; i < 10; ++i) {
+Dataset<T> ReadMNISTData(Status st) {
+  return {ReadMnistImages<T>(st), ReadMnistLabels(st)};
+}
+
+template<typename T>
+T* OneHot(unsigned long t, int n) {
+  T* onehot = (T*)malloc(n*sizeof(T));
+  for (int i = 0; i < n; ++i) {
     onehot[i] = (i == (int)t) ? 1 : 0;
   }
   return onehot;
 }
 
+enum CifarClass {
+  COARSE,
+  FINE
+};
+
 template<typename T>
-Data<T> ReadCifar100Data(status st) {
+Dataset<T> ReadCifar100Data(Status st, const CifarClass c_class) {
   FILE *fp = (st == TRAIN) ? fopen(kCifar100TrainDataFilePath, "rb") :
     fopen(kCifar100TestDataFilePath, "rb");
   if (fp == NULL) {
@@ -147,23 +164,38 @@ Data<T> ReadCifar100Data(status st) {
   int image_2d = number_of_rows * number_of_cols;
   int image_3d = number_of_rows * number_of_cols * number_of_channels;
 
-  T* datasets =
+  T* images =
     (T*)malloc(sizeof(T) * number_of_images * image_3d);
+  unsigned long* labels =
+    (unsigned long*)malloc(sizeof(unsigned long) * number_of_images);
+  
   for (int n = 0; n < number_of_images; ++n) {
+    unsigned char temp = 0;
+    size_t err = fread(&temp, sizeof(temp), 1, fp);
+    if (err < 1)
+      std::cerr << "File read error!" << std::endl;
+    if (c_class == COARSE)
+      labels[n] = (unsigned long)temp;
+    err = fread(&temp, sizeof(temp), 1, fp);
+    if (err < 1)
+      std::cerr << "File read error!" << std::endl;
+    if (c_class == FINE)
+      labels[n] = (unsigned long)temp;
+
     for (int i = 0; i < number_of_channels; ++i) {
       for (int j = 0; j < number_of_cols; ++j) {
         for (int k = 0; k < number_of_rows; ++k) {
-          unsigned char temp = 0;
-          size_t err = fread(&temp, sizeof(temp), 1, fp);
+          err = fread(&temp, sizeof(temp), 1, fp);
           if (err < 1)
             std::cerr << "File read error!" << std::endl;
-          datasets[n * image_3d + i * image_2d + j * number_of_rows + k]
+          images[n * image_3d + i * image_2d + j * number_of_rows + k]
             = (T)temp / 255.0;
         }
       }
     }
   }
   fclose(fp);
-  Data<T> images(image_3d, number_of_images, datasets);
-  return images;
+  Data<T> image(image_3d, number_of_images, images);
+  Data<unsigned long> label(1, number_of_images, labels);
+  return {image, label};
 }

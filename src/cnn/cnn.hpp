@@ -20,12 +20,28 @@
 #include "protos/cnn_params.pb.h"
 #include "protos/arithmatic.pb.h"
 
+template<typename T>
+class Model {
+public:
+  virtual void train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps) = 0;
+  virtual unsigned long predict(T* x_ptr, int i) const = 0;
+  virtual void save(std::string fname) = 0;
+  virtual void load(std::string fname) = 0;
+  virtual Dataset<T> readData(Status st) = 0;
+};
+
 template <typename T>
-class SimpleConvNet {
+class SimpleConvNet : public Model<T> {
 public:
   SimpleConvNet() : Conv1(Convolution<5, 5, 1, 30, 0, 1, T>(-0.1, 0.1)),
                     Affine1(Affine<12*12*30, 100, T>(-0.1, 0.1)),
                     Affine2(Affine<100, 10, T>(-0.1, 0.1)) {};
+  void train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps);
+  unsigned long predict(T* x_ptr, int i) const;
+  void save(std::string fname);
+  void load(std::string fname);
+  Dataset<T> readData(Status st);
+private:
   Convolution<5, 5, 1, 30, 0, 1, T> Conv1;
   Relu<T> Relu1;
   Pooling<2, 2, 0, 2, T> Pool1;
@@ -35,85 +51,79 @@ public:
   Sigmoid<T> Last;
 };
 
-template <typename T>
-class CNN {
-public:
-  void simple_train(const Tensor2D<28, 28, T>& x, const Tensor1D<10, T>& t,
-                    const T& eps);
-  unsigned long simple_predict(const Tensor2D<28, 28, T>& x) const;
-  void simple_save(std::string fname);
-  void simple_load(std::string fname);
-  static void run();
-  static void inference();
-private:
-  SimpleConvNet<T> simple;
-};
 
 template <typename T>
-void CNN<T>::simple_train(const Tensor2D<28, 28, T>& x, const Tensor1D<10, T>& t,
-                          const T& eps) {
+void SimpleConvNet<T>::train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps) {
+  Tensor2D<28, 28, T> x;
+  Tensor1D<10, T> t;
+  x.set_v(x_ptr + i*x.size());
+  t.set_v(OneHot<T>(t_ptr[i], t.size()));
+  
   // forward
   Tensor3D<24, 24, 30, T> conv1_ans;
-  simple.Conv1.forward(x, &conv1_ans);
+  Conv1.forward(x, &conv1_ans);
 
-  simple.Relu1.forward(&conv1_ans);
+  Relu1.forward(&conv1_ans);
 
   Tensor3D<12, 12, 30, T> pool1_ans;
   Tensor1D<12*12*30, int> idx;
-  simple.Pool1.forward(conv1_ans, &pool1_ans, &idx);
+  Pool1.forward(conv1_ans, &pool1_ans, &idx);
 
   Tensor1D<12*12*30, T> dense1 = pool1_ans.flatten();
   Tensor1D<100, T> dense2;
-  simple.Affine1.forward(dense1, &dense2);
+  Affine1.forward(dense1, &dense2);
 
-  simple.Relu2.forward(&dense2);
+  Relu2.forward(&dense2);
 
   Tensor1D<10, T> ans;
-  simple.Affine2.forward(dense2, &ans);
+  Affine2.forward(dense2, &ans);
 
-  simple.Last.forward(&ans);
+  Last.forward(&ans);
 
   // Backward
   Tensor1D<10, T> delta3 = ans - t;
   Tensor1D<100, T> delta2;
-  simple.Affine2.backward(delta3, dense2, &delta2, eps);
-  simple.Relu2.backward(&delta2, dense2);
+  Affine2.backward(delta3, dense2, &delta2, eps);
+  Relu2.backward(&delta2, dense2);
 
   Tensor1D<12*12*30, T> delta1;
-  simple.Affine1.backward(delta2, dense1, &delta1, eps);
+  Affine1.backward(delta2, dense1, &delta1, eps);
 
   Tensor3D<12, 12, 30, T> delta1_3D;
   delta1_3D.set_v(delta1.get_v());
   Tensor3D<24, 24, 30, T> delta_pool;
-  simple.Pool1.backward(delta1_3D, idx, &delta_pool);
+  Pool1.backward(delta1_3D, idx, &delta_pool);
 
-  simple.Relu1.backward(&delta_pool, conv1_ans);
+  Relu1.backward(&delta_pool, conv1_ans);
 
   Tensor2D<28, 28, T> delta_conv;
-  simple.Conv1.backward(delta_pool, x, &delta_conv, eps);
+  Conv1.backward(delta_pool, x, &delta_conv, eps);
 }
 
 template <typename T>
-unsigned long CNN<T>::simple_predict(const Tensor2D<28, 28, T>& x) const {
-  Tensor3D<24, 24, 30, T> conv1_ans;
-  simple.Conv1.forward(x, &conv1_ans);
+unsigned long SimpleConvNet<T>::predict(T* x_ptr, int i) const{
+  Tensor2D<28, 28, T> x;
+  x.set_v(x_ptr + i*x.size());
 
-  simple.Relu1.forward(&conv1_ans);
+  Tensor3D<24, 24, 30, T> conv1_ans;
+  Conv1.forward(x, &conv1_ans);
+
+  Relu1.forward(&conv1_ans);
 
   Tensor3D<12, 12, 30, T> pool1_ans;
   Tensor1D<12*12*30, int> idx;
-  simple.Pool1.forward(conv1_ans, &pool1_ans, &idx);
+  Pool1.forward(conv1_ans, &pool1_ans, &idx);
 
   Tensor1D<12*12*30, T> dense1 = pool1_ans.flatten();
   Tensor1D<100, T> dense2;
-  simple.Affine1.forward(dense1, &dense2);
+  Affine1.forward(dense1, &dense2);
 
-  simple.Relu2.forward(&dense2);
+  Relu2.forward(&dense2);
 
   Tensor1D<10, T> ans;
-  simple.Affine2.forward(dense2, &ans);
+  Affine2.forward(dense2, &ans);
 
-  simple.Last.forward(&ans);
+  Last.forward(&ans);
 
   T max = (T)0;
   unsigned long argmax = 0;
@@ -127,11 +137,11 @@ unsigned long CNN<T>::simple_predict(const Tensor2D<28, 28, T>& x) const {
 }
 
 template <typename T>
-void CNN<T>::simple_save(std::string fname) {
+void SimpleConvNet<T>::save(std::string fname) {
   CnnProto::Params params;
-  simple.Conv1.saveParams(&params);
-  simple.Affine1.saveParams(&params);
-  simple.Affine2.saveParams(&params);
+  Conv1.saveParams(&params);
+  Affine1.saveParams(&params);
+  Affine2.saveParams(&params);
   std::fstream output(Options::GetWeightsOutput(), std::ios::out | std::ios::trunc | std::ios::binary);
   if (!params.SerializeToOstream(&output)) {
     std::cerr << "Failed to write params." << std::endl;
@@ -139,41 +149,205 @@ void CNN<T>::simple_save(std::string fname) {
 }
 
 template <typename T>
-void CNN<T>::simple_load(std::string fname) {
+void SimpleConvNet<T>::load(std::string fname) {
   CnnProto::Params p;
   std::fstream input(Options::GetWeightsInput(), std::ios::in | std::ios::binary);
   if (!p.ParseFromIstream(&input)) {
     std::cerr << "Failed to load params." << std::endl;
   }
-  simple.Conv1.loadParams(&p, 0);
-  simple.Affine1.loadParams(&p, 1);
-  simple.Affine2.loadParams(&p, 2);
+  Conv1.loadParams(&p, 0);
+  Affine1.loadParams(&p, 1);
+  Affine2.loadParams(&p, 2);
+}
+
+template<typename T>
+Dataset<T> SimpleConvNet<T>::readData(Status st) {
+  return std::move(ReadMNISTData<T>(st));
 }
 
 template <typename T>
-void CNN<T>::run() {
-  const Data<T> train_X = ReadMnistImages<T>(TRAIN);
-  const Data<unsigned long> train_y = ReadMnistLabels(TRAIN);
+class SmallCNNForCifar : public Model<T> {
+public:
+  SmallCNNForCifar() : Conv1(Convolution<3, 3, 3, 32, 0, 1, T>(-0.1, 0.1)),
+                       Conv2(Convolution<3, 3, 32, 32, 0, 1, T>(-0.1, 0.1)),
+                       Conv3(Convolution<3, 3, 32, 64, 0, 1, T>(-0.1, 0.1)),
+                       Affine1(Affine<5*5*64, 100, T>(-0.1, 0.1)) {};
+  void train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps);
+  unsigned long predict(T* x_ptr, int i) const;
+  void save(std::string fname);
+  void load(std::string fname);
+  Dataset<T> readData(Status st);
+private:
+  Convolution<3, 3, 3, 32, 0, 1, T> Conv1;
+  Relu<T> Relu1;
+  Pooling<2, 2, 0, 2, T> Pool1;
+  Convolution<3, 3, 32, 32, 0, 1, T> Conv2;
+  Relu<T> Relu2;
+  Pooling<2, 2, 0, 1, T> Pool2;
+  Convolution<3, 3, 32, 64, 0, 1, T> Conv3;
+  Relu<T> Relu3;
+  Pooling<2, 2, 0, 2, T> Pool3;
+  Affine<5*5*64, 100, T> Affine1;
+  Sigmoid<T> Last;
+};
 
-  const Data<T> test_X = ReadMnistImages<T>(TEST);
-  const Data<unsigned long> test_y = ReadMnistLabels(TEST);
 
-  Tensor2D<28, 28, T> x;
-  Tensor1D<10, T> t;
-  CNN<T> cnn;
- 
+template <typename T>
+void SmallCNNForCifar<T>::train(T* x_ptr, unsigned long* t_ptr, int i, const T& eps) {
+  Tensor3D<32, 32, 3, T> x;
+  Tensor1D<100, T> t;
+  x.set_v(x_ptr + i*x.size());
+  t.set_v(OneHot<T>(t_ptr[i], t.size()));
+  
+  // forward
+  Tensor3D<30, 30, 32, T> conv1_ans;
+  Conv1.forward(x, &conv1_ans);
+  Relu1.forward(&conv1_ans);
+  Tensor3D<15, 15, 32, T> pool1_ans;
+  Tensor1D<15*15*32, int> idx1;
+  Pool1.forward(conv1_ans, &pool1_ans, &idx1);
+
+  Tensor3D<13, 13, 32, T> conv2_ans;
+  Conv2.forward(pool1_ans, &conv2_ans);
+  Relu2.forward(&conv2_ans);
+  Tensor3D<12, 12, 32, T> pool2_ans;
+  Tensor1D<12*12*32, int> idx2;
+  Pool2.forward(conv2_ans, &pool2_ans, &idx2);
+
+  Tensor3D<10, 10, 64, T> conv3_ans;
+  Conv3.forward(pool2_ans, &conv3_ans);
+  Relu3.forward(&conv3_ans);
+  Tensor3D<5, 5, 64, T> pool3_ans;
+  Tensor1D<5*5*64, int> idx3;
+  Pool3.forward(conv3_ans, &pool3_ans, &idx3);
+
+  Tensor1D<5*5*64, T> dense1 = pool3_ans.flatten();
+  Tensor1D<100, T> ans;
+  Affine1.forward(dense1, &ans);
+  Last.forward(&ans);
+
+  // Backward
+  Tensor1D<100, T> delta2 = ans - t;
+  Tensor1D<5*5*64, T> delta1;
+  Affine1.backward(delta2, dense1, &delta1, eps);
+
+  Tensor3D<5, 5, 64, T> delta1_3D;
+  delta1_3D.set_v(delta1.get_v());
+  
+  Tensor3D<10, 10, 64, T> delta_pool3;
+  Pool3.backward(delta1_3D, idx3, &delta_pool3);
+  Relu3.backward(&delta_pool3, conv3_ans);
+  Tensor3D<12, 12, 32, T> delta_conv3;
+  Conv3.backward(delta_pool3, pool2_ans, &delta_conv3, eps);
+
+  Tensor3D<13, 13, 32, T> delta_pool2;
+  Pool2.backward(delta_conv3, idx2, &delta_pool2);
+  Relu2.backward(&delta_pool2, conv2_ans);
+  Tensor3D<15, 15, 32, T> delta_conv2;
+  Conv2.backward(delta_pool2, pool1_ans, &delta_conv2, eps);
+
+  Tensor3D<30, 30, 32, T> delta_pool1;
+  Pool1.backward(delta_conv2, idx1, &delta_pool1);
+  Relu1.backward(&delta_pool1, conv1_ans);
+  Tensor3D<32, 32, 3, T> delta_conv1;
+  Conv1.backward(delta_pool1, x, &delta_conv1, eps);
+}
+
+template <typename T>
+unsigned long SmallCNNForCifar<T>::predict(T* x_ptr, int i) const {
+  Tensor3D<32, 32, 3, T> x;
+  x.set_v(x_ptr + i*x.size());
+  
+  Tensor3D<30, 30, 32, T> conv1_ans;
+  Conv1.forward(x, &conv1_ans);
+  Relu1.forward(&conv1_ans);
+  Tensor3D<15, 15, 32, T> pool1_ans;
+  Tensor1D<15*15*32, int> idx1;
+  Pool1.forward(conv1_ans, &pool1_ans, &idx1);
+
+  Tensor3D<13, 13, 32, T> conv2_ans;
+  Conv2.forward(pool1_ans, &conv2_ans);
+  Relu2.forward(&conv2_ans);
+  Tensor3D<12, 12, 32, T> pool2_ans;
+  Tensor1D<12*12*32, int> idx2;
+  Pool2.forward(conv2_ans, &pool2_ans, &idx2);
+
+  Tensor3D<10, 10, 64, T> conv3_ans;
+  Conv3.forward(pool2_ans, &conv3_ans);
+  Relu3.forward(&conv3_ans);
+  Tensor3D<5, 5, 64, T> pool3_ans;
+  Tensor1D<5*5*64, int> idx3;
+  Pool3.forward(conv3_ans, &pool3_ans, &idx3);
+
+  Tensor1D<5*5*64, T> dense1 = pool3_ans.flatten();
+  Tensor1D<100, T> ans;
+  Affine1.forward(dense1, &ans);
+  Last.forward(&ans);
+
+  T max = (T)0;
+  unsigned long argmax = 0;
+  for (int i = 0; i < 100; ++i) {
+    if (ans[i] > max) {
+      max = ans[i];
+      argmax = i;
+    }
+  }
+  return argmax;
+}
+
+template <typename T>
+void SmallCNNForCifar<T>::save(std::string fname) {
+  CnnProto::Params params;
+  Conv1.saveParams(&params);
+  Conv2.saveParams(&params);
+  Conv3.saveParams(&params);
+  Affine1.saveParams(&params);
+  std::fstream output(Options::GetWeightsOutput(), std::ios::out | std::ios::trunc | std::ios::binary);
+  if (!params.SerializeToOstream(&output)) {
+    std::cerr << "Failed to write params." << std::endl;
+  }
+}
+
+template <typename T>
+void SmallCNNForCifar<T>::load(std::string fname) {
+  CnnProto::Params p;
+  std::fstream input(Options::GetWeightsInput(), std::ios::in | std::ios::binary);
+  if (!p.ParseFromIstream(&input)) {
+    std::cerr << "Failed to load params." << std::endl;
+  }
+  Conv1.loadParams(&p, 0);
+  Conv2.loadParams(&p, 0);
+  Conv3.loadParams(&p, 0);
+  Affine1.loadParams(&p, 1);
+}
+
+template<typename T>
+Dataset<T> SmallCNNForCifar<T>::readData(Status st) {
+  return ReadCifar100Data<T>(st, FINE);
+}
+
+template <typename T>
+class CNN {
+public:
+  static void training(Model<T> model);
+  static void inference(Model<T> model);
+};
+
+template <typename T>
+void CNN<T>::training(Model<T> model) {
+  Dataset<T> train = model.readData(TRAIN);
+  Dataset<T> test = model.readData(TEST);
+
   T eps = (T)0.01;
   int epoch = 20;
   int image_num = 1000;
 
   for (int k = 0; k < epoch; ++k) {
     for (int i = image_num*k; i < image_num*(k+1); ++i) {
-      x.set_v(train_X.ptr_ + i * x.shape()[1] * x.shape()[0]);
-      t.set_v(mnistOneHot<T>(train_y.ptr_[i]));
       if (Options::IsSaveArithmetic()) {
         std::stringstream sFile;
         sFile << Options::GetArithmaticOutput();
-        cnn.simple_train(x, t, eps);
+        model.train(train.images.ptr_, train.labels.ptr_, i, eps);
         using namespace google::protobuf::io;
         std::ofstream output(sFile.str(), std::ofstream::out | std::ofstream::trunc
                              | std::ofstream::binary);
@@ -188,17 +362,16 @@ void CNN<T>::run() {
         p.Clear();
       }
       else {
-        cnn.simple_train(x, t, eps);
+        model.train(train.images.ptr_, train.labels.ptr_, i, eps);
       }
     }
     int cnt = 0;
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < 3000; ++i) {
-      x.set_v(test_X.ptr_ + i * x.shape()[1] * x.shape()[0]);
-      unsigned long y = cnn.simple_predict(x);
+      unsigned long y = model.predict(test.images.ptr_, i);
       if (Options::IsSaveArithmetic())
         p.Clear();
-      if (y == test_y.ptr_[i])
+      if (y == test.labels.ptr_[i])
         ++cnt;
     }
     auto end = std::chrono::system_clock::now();
@@ -211,28 +384,24 @@ void CNN<T>::run() {
     std::cout << "Accuracy: " << (float)cnt / (float)3000 << std::endl;
   }
   if (Options::IsSaveParams())
-    cnn.simple_save("float_params.pb");
-  free(train_X.ptr_);
-  free(train_y.ptr_);
+    model.save("float_params.pb");
+  free(train.images.ptr_);
+  free(train.labels.ptr_);
 
-  free(test_X.ptr_);
-  free(test_y.ptr_);
+  free(test.images.ptr_);
+  free(test.images.ptr_);
 }
 
 template <typename T>
-void CNN<T>::inference() {
-  const Data<T> test_X = ReadMnistImages<T>(TEST);
-  const Data<unsigned long> test_y = ReadMnistLabels(TEST);
+void CNN<T>::inference(Model<T> model) {
+  Dataset<T> test = model.readData(TEST);
 
-  Tensor2D<28, 28, T> x;
-  CNN<T> cnn;
-  cnn.simple_load("float_params.pb");
+  model.load("float_params.pb");
   int cnt = 0;
   auto start = std::chrono::system_clock::now();
   for (int i = 0; i < 3000; ++i) {
-    x.set_v(test_X.ptr_ + i * x.shape()[1] * x.shape()[0]);
-    unsigned long y = cnn.simple_predict(x);
-    if (y == test_y.ptr_[i])
+    unsigned long y = model.predict(test.images.ptr_, i);
+    if (y == test.labels.ptr_[i])
       ++cnt;
   }
   auto end = std::chrono::system_clock::now();
@@ -243,8 +412,8 @@ void CNN<T>::inference() {
             << std::endl;
   std::cout << "Accuracy: " << (float)cnt / (float)3000 << std::endl;
   
-  free(test_X.ptr_);
-  free(test_y.ptr_);
+  free(test.images.ptr_);
+  free(test.labels.ptr_);
 }
 
 
