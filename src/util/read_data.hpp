@@ -17,8 +17,8 @@ namespace {
   const int kExpectImageMagicNumber = 2051;
   const int kExpectLabelMagicNumber = 2049;
 
-  const char* kCifar100TestDataFilePath = "data/cihar-100-binary/test.bin";
-  const char* kCifar100TrainDataFilePath = "data/cihar-100-binary/test.bin";
+  const char* kCifar100TestDataFilePath = "data/cifar-100-binary/test.bin";
+  const char* kCifar100TrainDataFilePath = "data/cifar-100-binary/train.bin";
 }
 
 enum Status {
@@ -164,13 +164,17 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
     LabelType label;
     unsigned char temp = 0;
     size_t err = fread(&temp, sizeof(temp), 1, fp);
-    if (err < 1)
+    if (err < 1) {
       std::cerr << "File read error!" << std::endl;
+      exit(1);
+    }
     if (c_class == COARSE)
       label = OneHot<LabelType>((unsigned long)temp);
     err = fread(&temp, sizeof(temp), 1, fp);
-    if (err < 1)
+    if (err < 1) {
       std::cerr << "File read error!" << std::endl;
+      exit(1);
+    }
     if (c_class == FINE)
       label = OneHot<LabelType>((unsigned long)temp);
 
@@ -178,8 +182,10 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
       for (int j = 0; j < number_of_cols; ++j) {
         for (int k = 0; k < number_of_rows; ++k) {
           err = fread(&temp, sizeof(temp), 1, fp);
-          if (err < 1)
+          if (err < 1) {
             std::cerr << "File read error!" << std::endl;
+            exit(1);
+          }
           image[i * image_2d + j * number_of_rows + k]
             = temp / 255.0;
         }
