@@ -51,6 +51,7 @@ private:
   Convolution<3, 3, 256, 256, 1, 1, T> Conv34;
   Relu<T> Relu34;
   Pooling<2, 2, 0, 2, T> Pool3;
+  
   Affine<4*4*256, 1024, T> Affine1;
   Relu<T> Relu4;
   Affine<1024, 1024, T> Affine2;
