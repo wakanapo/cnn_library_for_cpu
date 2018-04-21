@@ -100,8 +100,8 @@ std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize> Tensor<dim1, dim2,
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 const T &Tensor<dim1, dim2, dim3, dim4, dim5, T>::operator[](const int i) const {
   if (i < 0 || i >= kSize) {
-    std::cerr << i << " is out of range(" << kSize << ")." << std::endl;
     std::cerr << "Error!: Invalid index." << std::endl;
+    std::cerr << i << " is out of range" << kSize << "(" << typeid(*this).name() << ")" << std::endl;
     exit(1);
   }
   return v_[i];
@@ -110,8 +110,8 @@ const T &Tensor<dim1, dim2, dim3, dim4, dim5, T>::operator[](const int i) const 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 T &Tensor<dim1, dim2, dim3, dim4, dim5, T>::operator[](const int i) {
   if (i < 0 || i >= kSize) {
-    std::cerr << i << " is out of range(" << kSize << ")." << std::endl;
     std::cerr << "Error!: Invalid index." << std::endl;
+    std::cerr << i << " is out of range" << kSize << "(" << typeid(*this).name() << ")" << std::endl;
     exit(1);
   }
   return v_[i];
@@ -182,7 +182,7 @@ Tensor<dim2, dim1, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>:
   for (int k = 0; k < dim3 * dim4 * dim5; ++k) {
     for (int i = 0; i < dim1; ++i) {
       for (int j = 0 ; j < dim2; ++j) {
-      m[k * dim1 * dim2 + i * dim2 + j] = v_[k * dim1 * dim2 + j * dim1 + i];
+        m[k * dim1 * dim2 + i * dim2 + j] = v_[k * dim1 * dim2 + j * dim1 + i];
       }
     }
   }

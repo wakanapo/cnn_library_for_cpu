@@ -64,7 +64,9 @@ template<int x_row, int x_col, int a_row, int a_col>
 void Convolution<w_row, w_col, input, output, P, S, T>
 ::forward(const Tensor3D<x_row, x_col, input, T> &x,
           Tensor3D<a_row, a_col, output, T> *ans) const {
-  Function::conv2d(x, w_, ans, P, S);
+  Tensor3D<x_row+2*P, x_col+2*P, input, T> x_p;
+  Function::padding(x, &x_p, P);
+  Function::conv2d(x_p, w_, ans, S);
   Function::add_bias(ans, b_);
 }
 
@@ -74,7 +76,10 @@ void Convolution<w_row, w_col, input, output, P, S, T>
 ::backward(const Tensor3D<a_row, a_col, output, T> &delta,
            const Tensor3D<x_row, x_col, input, T> &x,
            Tensor3D<x_row, x_col, input, T> *ans, const T& eps) {
-  Function::deconv2d(delta, w_, ans, P, S);
+  constexpr int pad_size = w_row - 1 - P;
+  Tensor3D<a_row+2*pad_size, a_col+2*pad_size, output, T> delta_p;
+  Function::padding(delta, &delta_p, pad_size);
+  Function::deconv2d(delta_p, w_, ans, S);
   update_w(delta, x, eps);
   update_b(delta, x, eps);
 }
@@ -91,8 +96,8 @@ void Convolution<w_row, w_col, input, output, P, S, T>
   Shape x_dim = x.shape();
   for (int i = 0; i < w_dim[3]; ++i)
     for (int j = 0; j < w_dim[2]; ++j)
-      for (int k = 0; k < w_dim[1]; ++k)
-        for (int l = 0; l < w_dim[0]; ++l)
+      for (int k = 0; k < w_dim[1]-2*P; ++k)
+        for (int l = 0; l < w_dim[0]-2*P; ++l)
 
           for (int c = 0; c < d_dim[1]; ++c)
             for (int r = 0; r < d_dim[0]; ++r)
@@ -252,7 +257,7 @@ public:
 template<typename T>
 template<int dim1, int dim2, int dim3>
 void Relu<T>::forward(Tensor3D<dim1, dim2, dim3, T>* x) const {
-      Function::ReLU(x);
+  Function::ReLU(x);
 };
 
 template<typename T>
@@ -277,7 +282,7 @@ public:
 template<typename T>
 template<int dim1, int dim2, int dim3>
 void Sigmoid<T>::forward(Tensor3D<dim1, dim2, dim3, T>* x) const {
-      Function::sigmoid(x);
+  Function::sigmoid(x);
 };
 
 template<typename T>
@@ -302,7 +307,7 @@ public:
 template<typename T>
 template<int dim1, int dim2, int dim3>
 void Softmax<T>::forward(Tensor3D<dim1, dim2, dim3, T>* x) const {
-      Function::softmax(x);
+  Function::softmax(x);
 };
 
 template<typename T>

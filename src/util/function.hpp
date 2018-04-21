@@ -35,14 +35,12 @@ public:
             int w_row, int w_col, int out, int a_row, int a_col>
   static void conv2d(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
                      const Tensor<w_row, w_col, dim3, out, dim4, T>& w,
-                     Tensor<a_row, a_col, out, dim4, dim5, T>* ans,
-                     int p, int s);
+                     Tensor<a_row, a_col, out, dim4, dim5, T>* ans, int s);
   template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
             int w_row, int w_col, int out, int a_row, int a_col>
   static void deconv2d(const Tensor<a_row, a_col, out, dim4, dim5, T>& conv,
                        const Tensor<w_row, w_col, dim3, out, dim5, T>& w,
-                       Tensor<dim1, dim2, dim3, dim4, dim5, T>* ans,
-                       int p, int s);
+                       Tensor<dim1, dim2, dim3, dim4, dim5, T>* ans, int s);
   template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
             int a_row, int a_col>
   static void max_pool(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
@@ -61,7 +59,7 @@ public:
   template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
             int dim1_p, int dim2_p>
   static void padding(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& before,
-                      Tensor<dim1_p, dim2_p, dim3, dim4, dim5, T>* ans, int p);
+                      Tensor<dim1_p, dim2_p, dim3, dim4, dim5, T>* ans, int pad);
 };
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
@@ -102,15 +100,14 @@ template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Function::softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
   int col = t->shape()[1];
   int row = t->shape()[0];
-  T* v = t->get_v();
   for (int l = 0; l < t->size() / (col * row); ++l) {
     for (int k = 0; k < col; ++k) {
       float sum = 0;
       for (int i = 0; i < row; ++i) {
-        sum = ADD(sum, (T)exp(v[l * (row * col) + k * row + i]));
+        sum = ADD(sum, (T)exp(t[l * (row * col) + k * row + i]));
       }
       for (int j = 0; j < row; ++j) {
-        v[l * (row * col) + k * row + j] = DIV((T)exp(v[l * (row * col) + k * row + j]), sum);
+        t[l * (row * col) + k * row + j] = DIV((T)exp(t[l * (row * col) + k * row + j]), sum);
       }
     }
   }
@@ -120,17 +117,16 @@ template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Function::deriv_softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T> *t) {
   int col = t->shape()[1];
   int row = t->shape()[0];
-  T* v = t->get_v();
   for (int l = 0; l < t->size() / (col * row); ++l) {
     for (int k = 0; k < col; ++k) {
       float sum = 0;
       for (int i = 0; i < row; ++i) {
-        sum = ADD(sum, (T)exp(v[l * (row * col) + k * row + i]));
+        sum = ADD(sum, (T)exp(t[l * (row * col) + k * row + i]));
       }
       for (int j = 0; j < row; ++j) {
         int idx = l*(row*col) + k*row + j;
-        v[idx] = exp(v[idx]) / sum;
-        v[idx] = v[idx] * (1.0 - Converter::ToFloat(v[idx]));
+        t[idx] = exp(t[idx]) / sum;
+        t[idx] = t[idx] * (1.0 - Converter::ToFloat(t[idx]));
       }
     }
   }
@@ -164,8 +160,7 @@ template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
           int w_row, int w_col, int out, int a_row, int a_col>
 void Function::conv2d(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
                       const Tensor<w_row, w_col, dim3, out, dim4, T>& w,
-                      Tensor<a_row, a_col, out, dim4, dim5, T> *ans,
-                      int p, int s) {
+                      Tensor<a_row, a_col, out, dim4, dim5, T> *ans, int s) {
   ans->init();
   Shape ans_dim = ans->shape();
   Shape w_dim = w.shape();
@@ -188,16 +183,11 @@ template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
           int w_row, int w_col, int out, int a_row, int a_col>
 void Function::deconv2d(const Tensor<a_row, a_col, out, dim4, dim5, T>& conv,
                         const Tensor<w_row, w_col, dim3, out, dim5, T>& w,
-                        Tensor<dim1, dim2, dim3, dim4, dim5, T>* ans,
-                        int p, int s) {
-  constexpr int pad_size = w_row - 1;
-  Tensor<dim1+2*pad_size, dim2+2*pad_size, out, dim4, dim5, T> pad_conv;
-  Function::padding(conv, &pad_conv, pad_size);
-
+                        Tensor<dim1, dim2, dim3, dim4, dim5, T>* ans, int s) {
   ans->init();
   Shape ans_dim = ans->shape();
   Shape w_dim = w.shape();
-  Shape dim = pad_conv.shape();
+  Shape dim = conv.shape();
   for (int k = 0; k < ans_dim[2]; ++k)
     for (int i = 0; i < ans_dim[1]; ++i)
       for (int j = 0; j < ans_dim[0]; ++j)
@@ -207,7 +197,7 @@ void Function::deconv2d(const Tensor<a_row, a_col, out, dim4, dim5, T>& conv,
             for (int r = 0; r < w_dim[0]; ++r)
               (*ans)[k*(ans_dim[0]*ans_dim[1]) + i*ans_dim[0] + j] =
                 ADD((T)(*ans)[k*(ans_dim[0]*ans_dim[1]) + i*ans_dim[0] + j],
-                    (T)MUL(pad_conv[ch*(dim[1]*dim[0]) + (i*s+c)*dim[0] + (j*s+r)],
+                    (T)MUL(conv[ch*(dim[1]*dim[0]) + (i*s+c)*dim[0] + (j*s+r)],
                         w[ch*(w_dim[2]*w_dim[1]*w_dim[0]) + k*(w_dim[1]*w_dim[0])
                           + (w_dim[1]-1-c)*w_dim[0] + (w_dim[0]-1-r)]));
 }
@@ -263,7 +253,7 @@ void Function::add_bias(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t,
 template <int dim1, int dim2, int dim3, int dim4, int dim5, typename T,
           int dim1_p, int dim2_p>
 void Function::padding(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& before,
-                       Tensor<dim1_p, dim2_p, dim3, dim4, dim5, T>* ans, int p) {
+                       Tensor<dim1_p, dim2_p, dim3, dim4, dim5, T>* ans, int pad) {
   ans->init();
   int col = before.shape()[1];
   int row = before.shape()[0];
@@ -271,9 +261,10 @@ void Function::padding(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& before,
     for (int i = 0; i < col; ++i) {
       for (int j = 0; j < row; ++j) {
         (*ans)[k*ans->shape()[1]*ans->shape()[0]
-               + (i+p)*ans->shape()[0] + (j+p)]
+               + (i+pad)*ans->shape()[0] + (j+pad)]
           = before[k*col*row + i*row + j];
       }
     }
   }
 }
+

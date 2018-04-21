@@ -52,8 +52,8 @@ LabelType OneHot(unsigned long t) {
 
 template<typename ImageType>
 std::vector<ImageType> ReadMnistImages(Status st) {
-  FILE *fp = (st == TRAIN) ? fopen(kMnistTrainImageFilePath, "rb") :
-    fopen(kMnistTestImageFilePath, "rb");
+  FILE *fp = fopen((st == TRAIN) ? kMnistTrainImageFilePath :
+                   kMnistTestImageFilePath, "rb");
   if (fp == NULL) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
@@ -98,8 +98,8 @@ std::vector<ImageType> ReadMnistImages(Status st) {
 
 template<typename LabelType>
 std::vector<LabelType> ReadMnistLabels(Status st) {
-  FILE *fp = (st == TRAIN) ? fopen(kMnistTrainLabelFilePath, "rb") :
-    fopen(kMnistTestLabelFilePath, "rb");
+  FILE *fp = fopen((st == TRAIN) ? kMnistTrainLabelFilePath :
+                   kMnistTestLabelFilePath, "rb");
   if (fp == NULL) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
@@ -132,18 +132,21 @@ std::vector<LabelType> ReadMnistLabels(Status st) {
 
 template<typename ImageType, typename LabelType>
 Dataset<ImageType, LabelType> ReadMNISTData(Status st) {
-  return {ReadMnistImages<ImageType>(st), ReadMnistLabels<LabelType>(st)};
+  auto data = {ReadMnistImages<ImageType>(st), ReadMnistLabels<LabelType>(st)};
+  std::cout << "Success read MNIST " <<
+    (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
+  return data;
 }
 
 enum CifarClass {
   COARSE,
   FINE
-};
+ };
 
 template<typename ImageType, typename LabelType>
 Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_class) {
-  FILE *fp = (st == TRAIN) ? fopen(kCifar100TrainDataFilePath, "rb") :
-    fopen(kCifar100TestDataFilePath, "rb");
+  FILE *fp =  fopen((st == TRAIN) ? kCifar100TrainDataFilePath :
+                    kCifar100TestDataFilePath, "rb");
   if (fp == NULL) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
@@ -195,5 +198,7 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
     images.push_back(image);
   }
   fclose(fp);
+  std::cout << "Success read Cifar100 " <<
+    (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
   return {images, labels};
 }
