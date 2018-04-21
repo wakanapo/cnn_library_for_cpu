@@ -66,14 +66,14 @@ void CNN<ModelType>::training() {
       }
     }
     std::cout << "Finish Train." << std::endl;
-    
+
     std::vector<std::future<int>> futures;
+    int par_cpu = 4096 / CPU_NUM;
     auto start = std::chrono::system_clock::now();
     for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
       futures.push_back(std::async(std::launch::async, [&] {
             int cnt = 0;
-#pragma clang loop unroll(full)
-            for (int i = 0; i < 4096 / CPU_NUM; ++i) {
+            for (int i = par_cpu * cpu; i < par_cpu * (cpu + 1); ++i) {
               unsigned long y = model.predict(test.images[i]);
               if (Options::IsSaveArithmetic())
                 p.Clear();
@@ -83,11 +83,11 @@ void CNN<ModelType>::training() {
             return cnt;
           }));
     }
+    auto end = std::chrono::system_clock::now();
     int sum = 0;
     for (auto &f : futures) {
       sum += f.get();
     }
-    auto end = std::chrono::system_clock::now();
     auto diff = end - start;
     std::cout << "Inference time = "
               << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
@@ -105,20 +105,33 @@ void CNN<ModelType>::inference() {
   Dataset<InputType, OutputType> test = model.readData(TEST);
 
   model.load();
-  int cnt = 0;
+  std::vector<std::future<int>> futures;
+  int par_cpu = 4096 / CPU_NUM;
   auto start = std::chrono::system_clock::now();
-  for (int i = 0; i < 3000; ++i) {
-    unsigned long y = model.predict(test.images[i]);
-    if (OneHot<OutputType>(y) == test.labels[i])
-      ++cnt;
+  for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
+    futures.push_back(std::async(std::launch::async, [&] {
+          int cnt = 0;
+          for (int i = par_cpu * cpu; i < par_cpu * (cpu + 1); ++i) {
+            unsigned long y = model.predict(test.images[i]);
+            if (Options::IsSaveArithmetic())
+              p.Clear();
+            if (OneHot<OutputType>(y) == test.labels[i])
+              ++cnt;
+          }
+          return cnt;
+        }));
   }
   auto end = std::chrono::system_clock::now();
+  int sum = 0;
+  for (auto &f : futures) {
+    sum += f.get();
+  }
   auto diff = end - start;
   std::cout << "Inference time = "
             << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
             << " sec."
             << std::endl;
-  std::cout << "Accuracy: " << (float)cnt / (float)3000 << std::endl;
+  std::cout << "Accuracy: " << (float)sum / (float)4096 << std::endl;
 }
 
 
