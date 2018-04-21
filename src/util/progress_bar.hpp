@@ -7,7 +7,7 @@ namespace {
     for (int i = 0; i < 100; ++i) {
       bar += b;
     }
-    return std::move(bar);
+    return bar;
   }
   std::string null_bar = makeBar("░");
   std::string fill_bar = makeBar("█");

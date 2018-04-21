@@ -39,7 +39,7 @@ void CNN<ModelType>::training() {
 
   Type eps = (Type)0.01;
   int epoch = 10;
-  int image_num = 5000;
+  int image_num = 50;
 
   for (int k = 0; k < epoch; ++k) {
     std::cout << "--------epoch " << k << "--------" << std::endl;
@@ -68,7 +68,7 @@ void CNN<ModelType>::training() {
     std::cout << "Finish Train." << std::endl;
 
     std::vector<std::future<int>> futures;
-    int par_cpu = 4096 / CPU_NUM;
+    int par_cpu = 1024 / CPU_NUM;
     auto start = std::chrono::system_clock::now();
     for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
       futures.push_back(std::async(std::launch::async, [&] {
@@ -93,7 +93,7 @@ void CNN<ModelType>::training() {
               << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
               << " sec."
               << std::endl;
-    std::cout << "Accuracy: " << (float)sum / (float)4096 << std::endl;
+    std::cout << "Accuracy: " << (float)sum / (float)1024 << std::endl;
   }
   if (Options::IsSaveParams())
     model.save();
