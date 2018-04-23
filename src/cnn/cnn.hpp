@@ -39,7 +39,7 @@ void CNN<ModelType>::training() {
 
   Type eps = (Type)0.01;
   int epoch = 10;
-  int image_num = 50000;
+  int image_num = 5000;
 
   for (int k = 0; k < epoch; ++k) {
     std::cout << "--------epoch " << k << "--------" << std::endl;

@@ -8,22 +8,22 @@
 #include "util/tensor.hpp"
 
 template<typename T>
-class VGG16 {
+class VGG {
 public:
   using Type = T;
   using InputType = Tensor3D<32, 32, 3, T>;
-  using OutputType = Tensor1D<100, T>;
-  VGG16() :  Conv11(Convolution<3, 3, 3, 64, 1, 1, T>(-0.1, 0.1)),
-              Conv12(Convolution<3, 3, 64, 64, 1, 1, T>(-0.1, 0.1)),
-              Conv21(Convolution<3, 3, 64, 128, 1, 1, T>(-0.1, 0.1)),
-              Conv22(Convolution<3, 3, 128, 128, 1, 1, T>(-0.1, 0.1)),
-              Conv31(Convolution<3, 3, 128, 256, 1, 1, T>(-0.1, 0.1)),
-              Conv32(Convolution<3, 3, 256, 256, 1, 1, T>(-0.1, 0.1)),
-              Conv33(Convolution<3, 3, 256, 256, 1, 1, T>(-0.1, 0.1)),
-              Conv34(Convolution<3, 3, 256, 256, 1, 1, T>(-0.1, 0.1)),
-              Affine1(Affine<4*4*256, 1024, T>(-0.1, 0.1)),
-              Affine2(Affine<1024, 1024, T>(-0.1, 0.1)),
-              Affine3(Affine<1024, 100, T>(-0.1, 0.1)) {};
+  using OutputType = Tensor1D<10, T>;
+  VGG() :  Conv11(Convolution<3, 3, 3, 64, 1, 1, T>(-0.1, 0.1)),
+           Conv12(Convolution<3, 3, 64, 64, 1, 1, T>(-0.1, 0.1)),
+           Conv21(Convolution<3, 3, 64, 128, 1, 1, T>(-0.1, 0.1)),
+           Conv22(Convolution<3, 3, 128, 128, 1, 1, T>(-0.1, 0.1)),
+           Conv31(Convolution<3, 3, 128, 256, 1, 1, T>(-0.1, 0.1)),
+           Conv32(Convolution<3, 3, 256, 256, 1, 1, T>(-0.1, 0.1)),
+           Conv33(Convolution<3, 3, 256, 256, 1, 1, T>(-0.1, 0.1)),
+           Conv34(Convolution<3, 3, 256, 256, 1, 1, T>(-0.1, 0.1)),
+           Affine1(Affine<4*4*256, 1024, T>(-0.1, 0.1)),
+           Affine2(Affine<1024, 1024, T>(-0.1, 0.1)),
+           Affine3(Affine<1024, 10, T>(-0.1, 0.1)) {};
   void train(const InputType& x, const OutputType& t, const T& eps);
   unsigned long predict(const InputType& x) const;
   void save();
@@ -56,13 +56,13 @@ private:
   Relu<T> Relu4;
   Affine<1024, 1024, T> Affine2;
   Relu<T> Relu5;
-  Affine<1024, 100, T> Affine3;
+  Affine<1024, 10, T> Affine3;
   Sigmoid<T> Last;
 };
 
 template<typename T>
-void VGG16<T>::train(const typename VGG16<T>::InputType& x,
-                     const typename VGG16<T>::OutputType& t,
+void VGG<T>::train(const typename VGG<T>::InputType& x,
+                     const typename VGG<T>::OutputType& t,
                      const T& eps) {
   // Forward
   Tensor3D<32, 32, 64, T> conv11_ans;
@@ -110,12 +110,12 @@ void VGG16<T>::train(const typename VGG16<T>::InputType& x,
   Affine2.forward(dense2, &dense3);
   Relu5.forward(&dense3);
 
-  Tensor1D<100, T> ans;
+  Tensor1D<10, T> ans;
   Affine3.forward(dense3, &ans);
   Last.forward(&ans);
 
   // Backward
-  Tensor1D<100, T> delta4 = ans - t;
+  Tensor1D<10, T> delta4 = ans - t;
   Tensor1D<1024, T> delta3;
   Affine3.backward(delta4, dense3, &delta3, eps);
   Relu5.backward(&delta3, dense3);
@@ -164,7 +164,7 @@ void VGG16<T>::train(const typename VGG16<T>::InputType& x,
 }
 
 template<typename T>
-unsigned long VGG16<T>::predict(const typename VGG16<T>::InputType &x) const {
+unsigned long VGG<T>::predict(const typename VGG<T>::InputType &x) const {
   Tensor3D<32, 32, 64, T> conv11_ans;
   Conv11.forward(x, &conv11_ans);
   Relu11.forward(&conv11_ans);
@@ -210,13 +210,13 @@ unsigned long VGG16<T>::predict(const typename VGG16<T>::InputType &x) const {
   Affine2.forward(dense2, &dense3);
   Relu5.forward(&dense3);
 
-  Tensor1D<100, T> ans;
+  Tensor1D<10, T> ans;
   Affine3.forward(dense3, &ans);
   Last.forward(&ans);
 
   T max = (T)0;
   unsigned long argmax = 0;
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 10; ++i) {
     if (ans[i] > max) {
       max = ans[i];
       argmax = i;
@@ -226,7 +226,7 @@ unsigned long VGG16<T>::predict(const typename VGG16<T>::InputType &x) const {
 }
 
 template<typename T>
-void VGG16<T>::save() {
+void VGG<T>::save() {
   CnnProto::Params params;
   Conv11.saveParams(&params);
   Conv12.saveParams(&params);
@@ -247,7 +247,7 @@ void VGG16<T>::save() {
 }
 
 template<typename T>
-void VGG16<T>::load() {
+void VGG<T>::load() {
   CnnProto::Params params;
   std::fstream input(Options::GetWeightsInput(),
                      std::ios::in | std::ios::binary);
@@ -268,7 +268,7 @@ void VGG16<T>::load() {
 }
 
 template<typename T>
-Dataset<typename VGG16<T>::InputType, typename VGG16<T>::OutputType>
-VGG16<T>::readData(Status st) {
-  return ReadCifar100Data<InputType, OutputType>(st, FINE);
+Dataset<typename VGG<T>::InputType, typename VGG<T>::OutputType>
+VGG<T>::readData(Status st) {
+  return ReadCifar10Data<InputType, OutputType>(st);
 }

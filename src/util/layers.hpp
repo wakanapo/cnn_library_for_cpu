@@ -240,8 +240,8 @@ void Affine<input, output, T>
 ::backward(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x, Tensor1D<input, T>* ans, const T& eps) {
   Tensor2D<input, output, T> w_t = w_.transpose();
   Function::matmul(delta, w_t, ans);
-  update_w(delta, x, ans, eps);
-  update_b(delta, x, ans, eps);
+  update_w(delta, x, eps);
+  update_b(delta, x, eps);
 }
 
 template<typename T>

@@ -11,7 +11,7 @@
 
 using half_float::half;
 template<typename T>
-using Model = VGG16<T>;
+using Model = VGG<T>;
 
 int main(int argc, char* argv[]) {
   Options::ParseCommandLine(argc, argv);
