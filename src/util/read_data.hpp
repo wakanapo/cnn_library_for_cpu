@@ -19,8 +19,8 @@ namespace {
 
   const char* kCifar100TestDataFilePath = "data/cifar-100-binary/test.bin";
   const char* kCifar100TrainDataFilePath = "data/cifar-100-binary/train.bin";
-  const char* kCifar10TestDataFilePath = "data/cifar-100-binary/test.bin";
-  const char* kCifar10TrainDataFilePath = "data/cifar-100-binary/train.bin";
+  const char* kCifar10TestDataFilePath = "data/cifar-10-binary/test.bin";
+  const char* kCifar10TrainDataFilePath = "data/cifar-10-binary/train.bin";
 }
 
 enum Status {
