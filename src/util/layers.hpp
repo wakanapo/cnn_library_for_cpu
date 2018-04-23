@@ -175,9 +175,9 @@ private:
   Tensor2D<output, input, T> w_;
   Tensor1D<output, T> b_;
   void update_w(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
-                Tensor1D<input, T>* ans, const T& eps);
+                const T& eps);
   void update_b(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
-                Tensor1D<input, T>* ans, const T& eps);
+                const T& eps);
 };
 
 template<int input, int output, typename T>
@@ -215,7 +215,7 @@ void Affine<input, output, T>
 template<int input, int output, typename T>
 void Affine<input, output, T>
 ::update_w(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
-           Tensor1D<input, T>* ans, const T& eps) {
+           const T& eps) {
   Tensor2D<output, input, T> dw;
   Tensor2D<1, input, T> x_t = x.transpose();
   Function::matmul(x_t, delta, &dw);
@@ -226,7 +226,7 @@ void Affine<input, output, T>
 template<int input, int output, typename T>
 void Affine<input, output, T>
 ::update_b(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
-           Tensor1D<input, T>* ans, const T& eps) {
+           const T& eps) {
   Tensor1D<1, T> x_ones;
   x_ones[0] = 1;
   Tensor1D<output, T> db;
