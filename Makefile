@@ -25,7 +25,7 @@ CNN_DEPS := $(CNN_SRCS:%.cc=%.d)
 GA_DEPS := $(GA_SRCS:%.cc=%.d)
 
 .PHONY: all
-all: protoc cnn ga utest
+all: cnn ga utest
 
 .PHONY: cnn
 cnn: $(BINDIR)/cnn
@@ -36,6 +36,7 @@ ga: $(BINDIR)/ga
 .PHONY: utest
 utest: $(BINDIR)/utest
 
+.SECONDARY:
 %.pb.cc %.pb.h: %.proto
 	$(PROTOC) -I=$(PROTODIR) --cpp_out=$(PROTODIR) $<
 
