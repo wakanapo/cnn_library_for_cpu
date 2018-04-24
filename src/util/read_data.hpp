@@ -2,6 +2,12 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <tuple>
+#include <memory>
+#include <vector>
+
+#include "util/flags.hpp"
+#include "util/tensor.hpp"
 
 namespace {
   const char* kMnistTestImageFilePath = "data/mnist/t10k-images-idx3-ubyte";
@@ -10,6 +16,11 @@ namespace {
   const char* kMnistTrainLabelFilePath = "data/mnist/train-labels.idx1-ubyte";
   const int kExpectImageMagicNumber = 2051;
   const int kExpectLabelMagicNumber = 2049;
+
+  const char* kCifar100TestDataFilePath = "data/cifar-100-binary/test.bin";
+  const char* kCifar100TrainDataFilePath = "data/cifar-100-binary/train.bin";
+  const char* kCifar10TestDataFilePath = "data/cifar-10-binary/test.bin";
+  const char* kCifar10TrainDataFilePath = "data/cifar-10-binary/train.bin";
 }
 
 enum Status {
@@ -17,12 +28,10 @@ enum Status {
   TEST
 };
 
-class Data {
-public:
-  Data(int col, int row, void* ptr) : col_(col), row_(row), ptr_(ptr) {};
-  const int col_;
-  const int row_;
-  void* ptr_;
+template<typename ImageType, typename LabelType>
+struct Dataset {
+  std::vector<ImageType> images;
+  std::vector<LabelType> labels;
 };
 
 int ConvertEndian(int i) {
@@ -34,10 +43,19 @@ int ConvertEndian(int i) {
   return ((int)c1 << 24) + ((int) c2 << 16) + ((int)c3 << 8) + c4;
 }
 
-template<typename T>
-Data ReadMnistImages(Status st) {
-  FILE *fp = (st == TEST) ? fopen(kMnistTestImageFilePath, "rb") :
-    fopen(kMnistTrainImageFilePath, "rb");
+template<typename LabelType>
+LabelType OneHot(unsigned long t) {
+  LabelType onehot;
+  for (int i = 0; i < onehot.size(); ++i) {
+    onehot[i] = (i == (int)t) ? 1 : 0;
+  }
+  return onehot;
+}
+
+template<typename ImageType>
+std::vector<ImageType> ReadMnistImages(Status st) {
+  FILE *fp = fopen((st == TRAIN) ? kMnistTrainImageFilePath :
+                   kMnistTestImageFilePath, "rb");
   if (fp == NULL) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
@@ -61,29 +79,29 @@ Data ReadMnistImages(Status st) {
   number_of_rows = ConvertEndian(number_of_rows);
   err = fread(&number_of_cols, sizeof(int), 1, fp);
   number_of_cols = ConvertEndian(number_of_cols);
-  int image_size = number_of_rows * number_of_cols;
 
-  T* datasets =
-    (T*)malloc(sizeof(T) * number_of_images * image_size);
+  std::vector<ImageType> images;
   for (int n = 0; n < number_of_images; ++n) {
-    for (int i = 0; i < number_of_rows; ++i) {
-      for (int j = 0; j < number_of_cols; ++j) {
+    ImageType image;
+    for (int i = 0; i < number_of_cols; ++i) {
+      for (int j = 0; j < number_of_rows; ++j) {
         unsigned char temp = 0;
         err = fread(&temp, sizeof(temp), 1, fp);
         if (err < 1)
           std::cerr << "File read error!" << std::endl;
-        datasets[n * image_size + i * number_of_cols + j] = (T)temp / 255.0;
+        image[i * number_of_rows + j] = temp / 255.0;
       }
     }
+    images.push_back(image);
   }
   fclose(fp);
-  Data images(number_of_images, image_size, datasets);
   return images;
 }
 
-Data ReadMnistLabels(Status st) {
-  FILE *fp = (st == TEST) ? fopen(kMnistTestLabelFilePath, "rb") :
-    fopen(kMnistTrainLabelFilePath, "rb");
+template<typename LabelType>
+std::vector<LabelType> ReadMnistLabels(Status st) {
+  FILE *fp = fopen((st == TRAIN) ? kMnistTrainLabelFilePath :
+                   kMnistTestLabelFilePath, "rb");
   if (fp == NULL) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
@@ -100,25 +118,142 @@ Data ReadMnistLabels(Status st) {
   err = fread(&number_of_labels, sizeof(int), 1, fp);
   number_of_labels = ConvertEndian(number_of_labels);
 
-  unsigned long* datasets =
-    (unsigned long*)malloc(sizeof(unsigned long) * number_of_labels);
+  std::vector<LabelType> labels;
   for (int i = 0; i < number_of_labels; ++i) {
+    LabelType label;
     unsigned char temp = 0;
     err = fread(&temp, sizeof(temp), 1, fp);
     if (err < 1)
       std::cerr << "File read error!" << std::endl;
-    datasets[i] = (unsigned long)temp;
+    label = OneHot<LabelType>((unsigned long)temp);
+    labels.push_back(label);
   }
   fclose(fp);
-  Data labels(1, number_of_labels, datasets);
   return labels;
 }
 
-template<typename T>
-T* mnistOneHot(unsigned long t) {
-  T* onehot = (T*)malloc(10*sizeof(T));
-  for (int i = 0; i < 10; ++i) {
-    onehot[i] = (i == (int)t) ? 1 : 0;
+template<typename ImageType, typename LabelType>
+Dataset<ImageType, LabelType> ReadMNISTData(Status st) {
+  auto data = {ReadMnistImages<ImageType>(st), ReadMnistLabels<LabelType>(st)};
+  std::cout << "Success read MNIST " <<
+    (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
+  return data;
+}
+
+enum CifarClass {
+  COARSE,
+  FINE
+};
+
+template<typename ImageType, typename LabelType>
+Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_class) {
+  FILE *fp =  fopen((st == TRAIN) ? kCifar100TrainDataFilePath :
+                    kCifar100TestDataFilePath, "rb");
+  if (fp == NULL) {
+    std::cerr << "File open error!!" << std::endl;
+    exit(EXIT_FAILURE);
   }
-  return onehot;
+
+  int number_of_images = (st == TRAIN) ? 50000 : 10000;
+  int number_of_rows = 32;
+  int number_of_cols = 32;
+  int number_of_channels = 3;
+
+  int image_2d = number_of_rows * number_of_cols;
+
+  std::vector<ImageType> images;
+  std::vector<LabelType> labels;
+
+  for (int n = 0; n < number_of_images; ++n) {
+    ImageType image;
+    LabelType label;
+    unsigned char temp = 0;
+    size_t err = fread(&temp, sizeof(temp), 1, fp);
+    if (err < 1) {
+      std::cerr << "File read error!" << std::endl;
+      exit(1);
+    }
+    if (c_class == COARSE)
+      label = OneHot<LabelType>((unsigned long)temp);
+    err = fread(&temp, sizeof(temp), 1, fp);
+    if (err < 1) {
+      std::cerr << "File read error!" << std::endl;
+      exit(1);
+    }
+    if (c_class == FINE)
+      label = OneHot<LabelType>((unsigned long)temp);
+
+    for (int i = 0; i < number_of_channels; ++i) {
+      for (int j = 0; j < number_of_cols; ++j) {
+        for (int k = 0; k < number_of_rows; ++k) {
+          err = fread(&temp, sizeof(temp), 1, fp);
+          if (err < 1) {
+            std::cerr << "File read error!" << std::endl;
+            exit(1);
+          }
+          image[i * image_2d + j * number_of_rows + k]
+            = temp / 255.0;
+        }
+      }
+    }
+    labels.push_back(label);
+    images.push_back(image);
+  }
+  fclose(fp);
+  std::cout << "Success read Cifar100 " <<
+    (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
+  return {images, labels};
+}
+
+
+template<typename ImageType, typename LabelType>
+Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
+  FILE *fp =  fopen((st == TRAIN) ? kCifar10TrainDataFilePath :
+                    kCifar10TestDataFilePath, "rb");
+  if (fp == NULL) {
+    std::cerr << "File open error!!" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  int number_of_images = (st == TRAIN) ? 50000 : 10000;
+  int number_of_rows = 32;
+  int number_of_cols = 32;
+  int number_of_channels = 3;
+
+  int image_2d = number_of_rows * number_of_cols;
+
+  std::vector<ImageType> images;
+  std::vector<LabelType> labels;
+
+  for (int n = 0; n < number_of_images; ++n) {
+    ImageType image;
+    LabelType label;
+    unsigned char temp = 0;
+    size_t err = fread(&temp, sizeof(temp), 1, fp);
+    if (err < 1) {
+      std::cerr << "File read error!" << std::endl;
+      exit(1);
+    }
+    label = OneHot<LabelType>((unsigned long)temp);
+
+    for (int i = 0; i < number_of_channels; ++i) {
+      for (int j = 0; j < number_of_cols; ++j) {
+        for (int k = 0; k < number_of_rows; ++k) {
+          err = fread(&temp, sizeof(temp), 1, fp);
+          if (err < 1) {
+            std::cerr << "File read error!" << std::endl;
+            exit(1);
+          }
+          image[i * image_2d + j * number_of_rows + k]
+            = temp / 255.0;
+        }
+      }
+    }
+    labels.push_back(label);
+    images.push_back(image);
+  }
+  fclose(fp);
+  std::cout << "Success read Cifar10 " <<
+    (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
+  return {images, labels};
 }

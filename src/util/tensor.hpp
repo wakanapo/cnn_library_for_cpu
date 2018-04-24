@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <iostream>
 #include <typeinfo>
 #include <random>
@@ -7,26 +8,24 @@
 
 #include "util/float_macro.hpp"
 
+using Shape = std::array<int, 5>;
+
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 class Tensor {
 private:
-  static constexpr int size_ = dim1*dim2*dim3*dim4*dim5;
-  int shape_[5] = {dim1, dim2, dim3, dim4, dim5};
-  std::unique_ptr<T[]> v_ = std::make_unique<T[]>(size_);;
+  static constexpr int kSize = dim1*dim2*dim3*dim4*dim5;
+  std::array<T, kSize> v_;
 public:
-  int size(int axis) const;
-  const int size() const;
+  int size() const;
   int bytes() const;
-  const int* shape() const;
-  template <typename T_prime>
-    void set_v(const std::unique_ptr<T_prime>& v_in);
-  template <typename T_prime>
-    void set_v(T_prime* v_in);
+  Shape shape() const;
   void init();
   void randomInit(float low, float high);
-  T* get_v();
+  template <typename T_prime>
+  void set_v(T_prime* v_in);
+  void set_v(std::array<T, kSize> v_in);
+  std::array<T, kSize> get_v();
   Tensor<dim1*dim2*dim3*dim4*dim5, 1, 1, 1, 1, T> flatten() const;
-  Tensor<dim1, dim2, dim3, dim4, dim5, T> make_clone() const;
   const T& operator[](const int i) const;
   T &operator[](const int i);
   Tensor<dim1, dim2, dim3, dim4, dim5, T>
@@ -35,6 +34,7 @@ public:
   operator-(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const;
   Tensor<dim1, dim2, dim3, dim4, dim5, T>
   operator*(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const;
+  bool operator==(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const;
   Tensor<dim1, dim2, dim3, dim4, dim5, T>
   times(const T& other) const;
   Tensor<dim2, dim1, dim3, dim4, dim5, T>
@@ -42,39 +42,32 @@ public:
 };
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
-int Tensor<dim1, dim2, dim3, dim4, dim5, T>::size(int axis) const {
-  return shape_[axis];
-}
-
-template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
-const int Tensor<dim1, dim2, dim3, dim4, dim5, T>::size() const {
-  return size_;
+int Tensor<dim1, dim2, dim3, dim4, dim5, T>::size() const {
+  return kSize;
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 int Tensor<dim1, dim2, dim3, dim4, dim5, T>::bytes() const {
-  return size_ * sizeof(T);
+  return kSize * sizeof(T);
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
-const int* Tensor<dim1, dim2, dim3, dim4, dim5, T>::shape() const {
-  return shape_;
-}
-
-template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
-template <typename T_prime>
-void Tensor<dim1, dim2, dim3, dim4, dim5, T>::set_v(const std::unique_ptr<T_prime>& v_in) {
-  for (int i = 0; i < size_; ++i) {
-    v_[i] = v_in[i];
-  }
+Shape Tensor<dim1, dim2, dim3, dim4, dim5, T>::shape() const {
+  const std::array<int, 5> ans = {{dim1, dim2, dim3, dim4, dim5}};
+  return ans;
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 template <typename T_prime>
 void Tensor<dim1, dim2, dim3, dim4, dim5, T>::set_v(T_prime* v_in) {
-  for (int i = 0; i < size_; ++i) {
+  for (int i = 0; i < kSize; ++i) {
       v_[i] = v_in[i];
   }
+}
+
+template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
+void Tensor<dim1, dim2, dim3, dim4, dim5, T>::set_v(std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize> v_in) {
+  v_ = v_in;
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
@@ -88,38 +81,38 @@ void Tensor<dim1, dim2, dim3, dim4, dim5, T>::randomInit(float low, float high) 
   //   v_[i] = dist(engine);
   // }
   std::normal_distribution<> dist(0, 1);
-  for (int i = 0; i < size_; ++i) {
+  for (int i = 0; i < kSize; ++i) {
     v_[i] = std::abs(high)*dist(engine);
   }
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Tensor<dim1, dim2, dim3, dim4, dim5, T>::init() {
-  for (int i = 0; i < size_; ++i)
+  for (int i = 0; i < kSize; ++i)
     v_[i] = 0;
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
-T* Tensor<dim1, dim2, dim3, dim4, dim5, T>::get_v() {
-  return v_.get();
+std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize> Tensor<dim1, dim2, dim3, dim4, dim5, T>::get_v() {
+  return v_;
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 const T &Tensor<dim1, dim2, dim3, dim4, dim5, T>::operator[](const int i) const {
-  if (i < 0 || i >= size_) {
-    std::cerr << i << " is out of range(" << size_ << ")." << std::endl;
+  if (i < 0 || i >= kSize) {
     std::cerr << "Error!: Invalid index." << std::endl;
-    abort(); // abort() is not supported by Vivado HLS.
+    std::cerr << i << " is out of range" << kSize << "(" << typeid(*this).name() << ")" << std::endl;
+    exit(1);
   }
   return v_[i];
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 T &Tensor<dim1, dim2, dim3, dim4, dim5, T>::operator[](const int i) {
-  if (i < 0 || i >= size_) {
-    std::cerr << i << " is out of range(" << size_ << ")." << std::endl;
+  if (i < 0 || i >= kSize) {
     std::cerr << "Error!: Invalid index." << std::endl;
-    abort(); // abort() is not supported by Vivado HLS.
+    std::cerr << i << " is out of range" << kSize << "(" << typeid(*this).name() << ")" << std::endl;
+    exit(1);
   }
   return v_[i];
 }
@@ -128,7 +121,7 @@ template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 Tensor<dim1, dim2, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>
 ::operator+(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& y) const {
   Tensor<dim1, dim2, dim3, dim4, dim5, T> ans;
-  for (int i = 0; i < size_; ++i) {
+  for (int i = 0; i < kSize; ++i) {
     ans[i] = ADD(v_[i], y[i]);
   }
   return ans;
@@ -138,7 +131,7 @@ template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 Tensor<dim1, dim2, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>
 ::operator-(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& y) const {
   Tensor<dim1, dim2, dim3, dim4, dim5, T> ans;
-  for (int i = 0; i < size_; ++i) {
+  for (int i = 0; i < kSize; ++i) {
     ans[i] = SUB(v_[i], y[i]);
   }
   return std::move(ans);
@@ -148,17 +141,27 @@ template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 Tensor<dim1, dim2, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>
 ::operator*(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& y) const {
   Tensor<dim1, dim2, dim3, dim4, dim5, T> ans;
-  for (int i = 0; i < size_; ++i) {
+  for (int i = 0; i < kSize; ++i) {
     ans[i] = MUL(v_[i], y[i]);
   }
   return std::move(ans);
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
+bool Tensor<dim1, dim2, dim3, dim4, dim5, T>
+::operator==(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& other) const {
+  for (int i = 0; i < kSize; ++i) {
+    if (this->v_[i] != other.v_[i])
+      return false;
+  }
+  return true;
+}
+
+template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 Tensor<dim1, dim2, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>
 ::times(const T& y) const {
   Tensor<dim1, dim2, dim3, dim4, dim5, T> ans;
-  for (int i = 0; i < size_; ++i) {
+  for (int i = 0; i < kSize; ++i) {
     ans[i] = MUL(v_[i], y);
   }
   return std::move(ans);
@@ -167,15 +170,7 @@ Tensor<dim1, dim2, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 Tensor<dim1*dim2*dim3*dim4*dim5, 1, 1, 1, 1, T>
 Tensor<dim1, dim2, dim3, dim4, dim5, T>::flatten() const {
-  Tensor<size_, 1, 1, 1, 1, T> ans;
-  ans.set_v(v_);
-  return std::move(ans);
-}
-
-template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
-Tensor<dim1, dim2, dim3, dim4, dim5, T>
-Tensor<dim1, dim2, dim3, dim4, dim5, T>::make_clone() const {
-  Tensor<dim1, dim2, dim3, dim4, dim5, T> ans;
+  Tensor<kSize, 1, 1, 1, 1, T> ans;
   ans.set_v(v_);
   return std::move(ans);
 }
@@ -184,9 +179,11 @@ template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 Tensor<dim2, dim1, dim3, dim4, dim5, T> Tensor<dim1, dim2, dim3, dim4, dim5, T>::transpose() const {
   // TODO(wakanapo): Be able to deal with the multi-dimensional array.
   Tensor<dim2, dim1, dim3, dim4, dim5, T> m;
-  for (int i = 0; i < dim1; ++i) {
-    for (int j = 0 ; j < dim2; ++j) {
-      m[i * dim2 + j] = v_[j * dim1 + i];
+  for (int k = 0; k < dim3 * dim4 * dim5; ++k) {
+    for (int i = 0; i < dim1; ++i) {
+      for (int j = 0 ; j < dim2; ++j) {
+        m[k * dim1 * dim2 + i * dim2 + j] = v_[k * dim1 * dim2 + j * dim1 + i];
+      }
     }
   }
   return std::move(m);
