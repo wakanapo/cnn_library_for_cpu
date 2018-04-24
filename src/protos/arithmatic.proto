@@ -7,7 +7,7 @@ message Calculation {
   string operator = 3;
   float a = 4;
   float b = 5;
-  float ans = 6;
+  float ans = 7;
 }
 
 message One {
