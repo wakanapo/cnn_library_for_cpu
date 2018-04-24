@@ -69,7 +69,7 @@ void CNN<ModelType>::training() {
 
     std::vector<std::future<int>> futures;
     int par_cpu = 4096 / CPU_NUM;
-    auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::steady_clock::now();
     for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
       futures.push_back(std::async(std::launch::async, [&] {
             int cnt = 0;
@@ -83,15 +83,15 @@ void CNN<ModelType>::training() {
             return cnt;
           }));
     }
-    auto end = std::chrono::system_clock::now();
+    auto end = std::chrono::steady_clock::now();
     int sum = 0;
     for (auto &f : futures) {
       sum += f.get();
     }
     auto diff = end - start;
     std::cout << "Inference time = "
-              << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
-              << " sec."
+              << std::chrono::duration_cast<std::chrono::minutes>(diff).count()
+              << " min."
               << std::endl;
     std::cout << "Accuracy: " << (float)sum / (float)4096 << std::endl;
   }
@@ -107,7 +107,7 @@ void CNN<ModelType>::inference() {
   model.load();
   std::vector<std::future<int>> futures;
   int par_cpu = 4096 / CPU_NUM;
-  auto start = std::chrono::system_clock::now();
+  auto start = std::chrono::steady_clock::now();
   for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
     futures.push_back(std::async(std::launch::async, [&] {
           int cnt = 0;
@@ -121,15 +121,15 @@ void CNN<ModelType>::inference() {
           return cnt;
         }));
   }
-  auto end = std::chrono::system_clock::now();
+  auto end = std::chrono::steady_clock::now();
   int sum = 0;
   for (auto &f : futures) {
     sum += f.get();
   }
   auto diff = end - start;
   std::cout << "Inference time = "
-            << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
-            << " sec."
+            << std::chrono::duration_cast<std::chrono::minutes>(diff).count()
+            << " min."
             << std::endl;
   std::cout << "Accuracy: " << (float)sum / (float)4096 << std::endl;
 }
