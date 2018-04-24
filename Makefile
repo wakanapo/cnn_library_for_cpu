@@ -1,7 +1,7 @@
 CXX := clang++
 PROTOC := protoc
 CXXFLAGS := -std=c++14 -Wall -O2 -pthread
-LDFLAGS := -L/usr/local/lib
+LDFLAGS := -L/usr/local/lib `pkg-config --cflags --libs protobuf`
 TESTFLAGS := -lgtest_main -lgtest -lpthread
 
 GTESTDIR := $(shell echo "$(HOME)")/googletest-master
@@ -34,15 +34,13 @@ $(OBJDIR)/%.o: %.cc $(BINDIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ -MMD $<
 
 cnn: $(CNN_OBJS)
-	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS) `pkg-config --cflags --libs protobuf`
+	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS)
 
 ga: $(GA_OBJS)
-	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS) `pkg-config --cflags --libs protobuf`
+	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS)
 
 utest: $(TEST_SRCS) $(BINDIR)
-	$(CXX) $(CXXFLAGS) -o $(BINDIR)/$@ $(TEST_SRCS) -I$(GTEST_INCLUDEDIR) $(INCLUDES) -L$(GTEST_LIBDIR) $(TESTFLAGS) `pkg-config --cflags --libs protobuf`
-
--include $(CNN_DEPS) $(GA_DEPS)
+	$(CXX) $(CXXFLAGS) -o $(BINDIR)/$@ $(TEST_SRCS) -I$(GTEST_INCLUDEDIR) $(INCLUDES) -L$(GTEST_LIBDIR) $(TESTFLAGS)
 
 .PHONY: clean
 clean:
@@ -51,3 +49,4 @@ clean:
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
+-include $(CNN_DEPS) $(GA_DEPS)
