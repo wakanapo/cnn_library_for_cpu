@@ -29,14 +29,13 @@ all: protoc cnn ga utest
 protoc: $(PROTOS)
 	$(PROTOC) -I=$(PROTODIR) --cpp_out=$(PROTODIR) $^
 
-$(OBJDIR)/%.o: %.cc $(BINDIR)
-	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
+$(OBJDIR)/%.o: $(OBJDIR) %.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ -MMD $<
 
-cnn: $(CNN_OBJS)
+cnn: $(CNN_OBJS) $(BINDIR)
 	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS)
 
-ga: $(GA_OBJS)
+ga: $(GA_OBJS) $(BINDIR)
 	$(CXX) -o $(BINDIR)/$@ $^ $(LDFLAGS)
 
 utest: $(TEST_SRCS) $(BINDIR)
@@ -48,5 +47,8 @@ clean:
 
 $(BINDIR):
 	mkdir -p $(BINDIR)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 -include $(CNN_DEPS) $(GA_DEPS)
