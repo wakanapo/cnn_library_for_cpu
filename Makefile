@@ -36,14 +36,6 @@ ga: $(BINDIR)/ga
 .PHONY: utest
 utest: $(BINDIR)/utest
 
-.SECONDARY:
-%.pb.cc %.pb.h: %.proto
-	$(PROTOC) -I=$(PROTODIR) --cpp_out=$(PROTODIR) $<
-
-$(OBJDIR)/%.o: %.cc $(PROTO_HEADERS)
-	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ -MMD $<
-
 $(BINDIR)/cnn: $(CNN_OBJS) $(BINDIR)
 	$(CXX) -o $@ $(CNN_OBJS) $(LDFLAGS)
 
@@ -53,11 +45,19 @@ $(BINDIR)/ga: $(GA_OBJS) $(BINDIR)
 $(BINDIR)/utest: $(TEST_SRCS) $(BINDIR)
 	$(CXX) $(CXXFLAGS) -o $@ $(TEST_SRCS) -I$(GTEST_INCLUDEDIR) $(INCLUDES) -L$(GTEST_LIBDIR) $(TESTFLAGS)
 
-.PHONY: clean
-clean:
-	rm -rf $(BINDIR) $(OBJDIR) $(PROTODIR)/*.pb.*
+$(OBJDIR)/%.o: %.cc $(PROTO_HEADERS)
+	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ -MMD $<
+
+.SECONDARY:
+%.pb.cc %.pb.h: %.proto
+	$(PROTOC) -I=$(PROTODIR) --cpp_out=$(PROTODIR) $<
 
 $(BINDIR):
 	mkdir -p $(BINDIR)
+
+.PHONY: clean
+clean:
+	rm -rf $(BINDIR) $(OBJDIR) $(PROTODIR)/*.pb.*
 
 -include $(CNN_DEPS) $(GA_DEPS)
