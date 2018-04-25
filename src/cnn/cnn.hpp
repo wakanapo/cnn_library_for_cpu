@@ -68,12 +68,12 @@ void CNN<ModelType>::training() {
     std::cout << "Finish Train." << std::endl;
 
     std::vector<std::future<int>> futures;
-    int par_cpu = 4096 / CPU_NUM;
+    int per_cpu = 4096 / CPU_NUM;
     auto start = std::chrono::steady_clock::now();
     for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
-      futures.push_back(std::async(std::launch::async, [&] {
+      futures.push_back(std::async(std::launch::async, [cpu, &model, &test, &per_cpu] {
             int cnt = 0;
-            for (int i = par_cpu * cpu; i < par_cpu * (cpu + 1); ++i) {
+            for (int i = per_cpu * cpu; i < per_cpu * (cpu + 1); ++i) {
               unsigned long y = model.predict(test.images[i]);
               if (Options::IsSaveArithmetic())
                 p.Clear();
@@ -83,15 +83,14 @@ void CNN<ModelType>::training() {
             return cnt;
           }));
     }
-    auto end = std::chrono::steady_clock::now();
     int sum = 0;
     for (auto &f : futures) {
       sum += f.get();
     }
-    auto diff = end - start;
+    auto diff = std::chrono::steady_clock::now() - start;
     std::cout << "Inference time = "
-              << std::chrono::duration_cast<std::chrono::minutes>(diff).count()
-              << " min."
+              << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
+              << " sec."
               << std::endl;
     std::cout << "Accuracy: " << (float)sum / (float)4096 << std::endl;
   }
