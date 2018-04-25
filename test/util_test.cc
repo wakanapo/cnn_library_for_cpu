@@ -445,6 +445,36 @@ TEST(Conv2dTest, Deconv) {
   EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
+TEST(Conv2dTest, DeconvPadding1) {
+  float x_raw[] = {0, 1, 2, 3, 4,
+                   5, 6, 7, 8, 9,
+                   10, 11, 12, 13, 14,
+                   15, 16, 17, 18, 19,
+                   20, 21, 22, 23, 24};
+  Tensor2D<5, 5, float> x;
+  x.set_v(x_raw);
+
+  float w_raw[] = {0, 1, 2,
+                   3, 4, 5,
+                   6, 7, 8};
+  Tensor2D<3, 3, float> w;
+  w.set_v(w_raw);
+
+  float expected_raw[] = {8, 26, 41, 56, 56,
+                          54, 120, 156, 192, 168,
+                          159, 300, 336, 372, 303,
+                          264, 480, 516, 552, 438,
+                          344, 584, 617, 650, 488};
+  Tensor2D<5, 5, float> expected;
+  expected.set_v(expected_raw);
+  Tensor2D<5, 5, float> actual;
+  Tensor2D<7, 7, float> pad_x;
+
+  Function::padding(x, &pad_x, 1);
+  Function::deconv2d(pad_x, w, &actual, 1);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
+}
+
 TEST(MaxPoolTest, Stride1) {
   float x_raw[] = {77, 80, 82, 78, 70,
                    83, 78, 80, 83, 82,
