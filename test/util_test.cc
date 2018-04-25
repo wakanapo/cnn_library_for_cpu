@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdio>
 #include <iostream>
 
@@ -12,10 +13,11 @@ void debug(float* a, int n) {
   std::cout << std::endl;
 }
 
-int fmemcmp(float* a, float* b, size_t size) {
-  for (size_t i = 0 ; i < size / sizeof(float); ++i) {
+template<typename T>
+int fmemcmp(T a, T b) {
+  for (int i = 0 ; i < a.size(); ++i) {
     if (std::abs(a[i] - b[i]) > 0.0001) {
-      printf("a[%4lu]=%f, b[%4lu]=%f\n", i, a[i], i, b[i]);
+      printf("a[%d]=%f, b[%d]=%f\n", i, a[i], i, b[i]);
       return i + 1;
     }
   }
@@ -23,12 +25,14 @@ int fmemcmp(float* a, float* b, size_t size) {
 }
 
 TEST(ReadDataTest, OneHot) {
-  float expected[10] = {};
+  using OutputType = Tensor1D<10, float>;
+  OutputType expected;
+  expected.init();
   unsigned long t = 2;
   expected[t] = 1.0;
 
-  float* actual = OneHot<float>(t);
-  EXPECT_EQ(fmemcmp(expected, actual, sizeof(expected)), 0);
+  OutputType actual = OneHot<OutputType>(t);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(MatmulTest, Matmul2D) {
@@ -50,7 +54,7 @@ TEST(MatmulTest, Matmul2D) {
   Tensor2D<2, 2, float> actual;
 
   Function::matmul(x, y, &actual);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), actual.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(MatmulTest, Matmul3D) {
@@ -83,7 +87,7 @@ TEST(MatmulTest, Matmul3D) {
   Tensor3D<2, 3, 2, float> actual;
 
   Function::matmul(x, y, &actual);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), actual.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(MatmulTest, Matmul1Dand1D) {
@@ -105,7 +109,7 @@ TEST(MatmulTest, Matmul1Dand1D) {
   Tensor2D<3, 3, float> actual;
 
   Function::matmul(x, y, &actual);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), actual.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 
@@ -123,7 +127,7 @@ TEST(TransposeTest, Transpose2D) {
   expected.set_v(expected_raw);
   Tensor2D<3, 3, float> actual = x.transpose();
 
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), actual.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 
@@ -144,7 +148,7 @@ TEST(PaddingTest, Padding1) {
   Tensor2D<5, 5, float> actual;
 
   Function::padding(x, &actual, 1);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(PaddingTest, Padding2) {
@@ -166,7 +170,7 @@ TEST(PaddingTest, Padding2) {
   Tensor2D<7, 7, float> actual;
 
   Function::padding(x, &actual, 2);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(PaddingTest, Padding3D) {
@@ -194,7 +198,7 @@ TEST(PaddingTest, Padding3D) {
   Tensor3D<5, 5, 2, float> actual;
 
   Function::padding(x, &actual, 1);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(SoftmaxTest, Softmax2D) {
@@ -211,7 +215,7 @@ TEST(SoftmaxTest, Softmax2D) {
   expected.set_v(expected_raw);
 
   Function::softmax(&x);
-  EXPECT_EQ(fmemcmp(x.get_v(), expected.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(x, expected), 0);
 }
 
 TEST(SoftmaxTest, Softmax3D) {
@@ -234,7 +238,7 @@ TEST(SoftmaxTest, Softmax3D) {
   expected.set_v(expected_raw);
 
   Function::softmax(&x);
-  EXPECT_EQ(fmemcmp(x.get_v(), expected.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(x, expected), 0);
 }
 
 TEST(SoftmaxTest, DerivSoftmax) {
@@ -251,7 +255,7 @@ TEST(SoftmaxTest, DerivSoftmax) {
   expected.set_v(expected_raw);
 
   Function::deriv_softmax(&x);
-  EXPECT_EQ(fmemcmp(x.get_v(), expected.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(x, expected), 0);
 }
 
 TEST(SigmoidTest, Sigmoid) {
@@ -268,7 +272,7 @@ TEST(SigmoidTest, Sigmoid) {
   expected.set_v(expected_raw);
 
   Function::sigmoid(&x);
-  EXPECT_EQ(fmemcmp(x.get_v(), expected.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(x, expected), 0);
 }
 
 TEST(SigmoidTest, DerivSigmoid) {
@@ -285,7 +289,7 @@ TEST(SigmoidTest, DerivSigmoid) {
   expected.set_v(expected_raw);
 
   Function::deriv_sigmoid(&x);
-  EXPECT_EQ(fmemcmp(x.get_v(), expected.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(x, expected), 0);
 }
 
 TEST(ReLUTest, ReLU) {
@@ -302,7 +306,7 @@ TEST(ReLUTest, ReLU) {
   expected.set_v(expected_raw);
 
   Function::ReLU(&x);
-  EXPECT_EQ(fmemcmp(x.get_v(), expected.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(x, expected), 0);
 }
 
 TEST(ReLUTest, DerivReLU) {
@@ -319,7 +323,7 @@ TEST(ReLUTest, DerivReLU) {
   expected.set_v(expected_raw);
 
   Function::deriv_ReLU(&x);
-  EXPECT_EQ(fmemcmp(x.get_v(), expected.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(x, expected), 0);
 }
 
 TEST(Conv2dTest, Stride1) {
@@ -344,8 +348,8 @@ TEST(Conv2dTest, Stride1) {
   expected.set_v(expected_raw);
   Tensor2D<3, 3, float> actual;
 
-  Function::conv2d(x, w, &actual, 0, 1);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  Function::conv2d(x, w, &actual, 1);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(Conv2dTest, Strides2) {
@@ -369,8 +373,8 @@ TEST(Conv2dTest, Strides2) {
   expected.set_v(expected_raw);
   Tensor2D<2, 2, float> actual;
 
-  Function::conv2d(x, w, &actual, 0, 2);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  Function::conv2d(x, w, &actual, 2);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(Conv2dTest, Out3D) {
@@ -407,8 +411,8 @@ TEST(Conv2dTest, Out3D) {
   expected.set_v(expected_raw);
   Tensor3D<3, 3, 3, float> actual;
 
-  Function::conv2d(x, w, &actual, 0, 1);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  Function::conv2d(x, w, &actual, 1);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(Conv2dTest, Deconv) {
@@ -425,8 +429,6 @@ TEST(Conv2dTest, Deconv) {
   Tensor2D<2, 2, float> w;
   w.set_v(w_raw);
 
-  Tensor2D<7, 7, float> pad_conv;
-
   float expected_raw[] = {0, 0, 1, 2, 3, 4,
                           0, 7, 13, 19, 25, 21,
                           10, 37, 43, 49, 55, 41,
@@ -436,9 +438,11 @@ TEST(Conv2dTest, Deconv) {
   Tensor2D<6, 6, float> expected;
   expected.set_v(expected_raw);
   Tensor2D<6, 6, float> actual;
+  Tensor2D<7, 7, float> pad_x;
 
-  Function::deconv2d(x, w, &actual, 0, 1);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  Function::padding(x, &pad_x, 1);
+  Function::deconv2d(pad_x, w, &actual, 1);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(MaxPoolTest, Stride1) {
@@ -460,7 +464,7 @@ TEST(MaxPoolTest, Stride1) {
   Tensor1D<16, int> idx;
 
   Function::max_pool(x, 2, 2, &actual, &idx, 0, 1);
-  EXPECT_EQ(memcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(MaxPoolTest, Stride2) {
@@ -480,7 +484,7 @@ TEST(MaxPoolTest, Stride2) {
   Tensor1D<4, int> idx;
 
   Function::max_pool(x, 2, 2, &actual, &idx, 0, 2);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(MaxPoolTest, Out3D) {
@@ -507,7 +511,7 @@ TEST(MaxPoolTest, Out3D) {
   Tensor1D<8, int> idx;
 
   Function::max_pool(x, 2, 2, &actual, &idx, 0, 2);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(MaxPoolTest, DepoolStride2) {
@@ -535,7 +539,7 @@ TEST(MaxPoolTest, DepoolStride2) {
   Tensor2D<5, 5, float> actual;
 
   Function::depool(x, idx, &actual);
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 
 TEST(AddTest, AddBias) {
@@ -556,7 +560,7 @@ TEST(AddTest, AddBias) {
   expected.set_v(expected_raw);
 
   Function::add_bias(&x, b);
-  EXPECT_EQ(fmemcmp(expected.get_v(), x.get_v(), expected.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, x), 0);
 }
 
 TEST(OperatorTest, Add) {
@@ -577,5 +581,5 @@ TEST(OperatorTest, Add) {
   Tensor2D<3, 2, float> actual;
 
   actual = x + y;
-  EXPECT_EQ(fmemcmp(expected.get_v(), actual.get_v(), actual.bytes()), 0);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
 }

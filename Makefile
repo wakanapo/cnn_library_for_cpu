@@ -2,7 +2,7 @@ CXX := clang++
 PROTOC := protoc
 CXXFLAGS := -std=c++14 -Wall -O2 -pthread
 LDFLAGS := -L/usr/local/lib `pkg-config --cflags --libs protobuf`
-TESTFLAGS := -lgtest_main -lgtest -lpthread
+TESTFLAGS := -lgtest_main -lgtest -lpthread `pkg-config --cflags --libs protobuf`
 
 GTESTDIR := $(shell echo "$(HOME)")/googletest-master
 GTEST_INCLUDEDIR := $(GTESTDIR)/googletest/include
@@ -23,6 +23,7 @@ CNN_OBJS := $(CNN_SRCS:%.cc=$(OBJDIR)/%.o)
 GA_OBJS := $(GA_SRCS:%.cc=$(OBJDIR)/%.o)
 CNN_DEPS := $(CNN_SRCS:%.cc=%.d)
 GA_DEPS := $(GA_SRCS:%.cc=%.d)
+TEST_DEPS := $(TEST_SRCS:%.cc=%.d)
 
 .PHONY: all
 all: cnn ga utest
@@ -60,4 +61,4 @@ $(BINDIR):
 clean:
 	rm -rf $(BINDIR) $(OBJDIR) $(PROTODIR)/*.pb.*
 
--include $(CNN_DEPS) $(GA_DEPS)
+-include $(CNN_DEPS) $(GA_DEPS) $(TEST_DEPS)

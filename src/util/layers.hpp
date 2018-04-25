@@ -77,7 +77,7 @@ void Convolution<w_row, w_col, input, output, P, S, T>
            const Tensor3D<x_row, x_col, input, T> &x,
            Tensor3D<x_row, x_col, input, T> *ans, const T& eps) {
   constexpr int pad_size = w_row - 1 - P;
-  Tensor3D<a_row+2*pad_size, a_col+2*pad_size, output, T> delta_p;
+  Tensor3D<x_row+2*pad_size, x_col+2*pad_size, output, T> delta_p;
   Function::padding(delta, &delta_p, pad_size);
   Function::deconv2d(delta_p, w_, ans, S);
   update_w(delta, x, eps);
