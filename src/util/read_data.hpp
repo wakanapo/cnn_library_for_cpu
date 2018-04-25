@@ -134,7 +134,8 @@ std::vector<LabelType> ReadMnistLabels(Status st) {
 
 template<typename ImageType, typename LabelType>
 Dataset<ImageType, LabelType> ReadMNISTData(Status st) {
-  auto data = {ReadMnistImages<ImageType>(st), ReadMnistLabels<LabelType>(st)};
+  Dataset<ImageType, LabelType> data =
+    {ReadMnistImages<ImageType>(st), ReadMnistLabels<LabelType>(st)};
   std::cout << "Success read MNIST " <<
     (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
   return data;
