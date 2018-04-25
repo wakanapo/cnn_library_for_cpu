@@ -104,10 +104,11 @@ void Function::softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T>* t) {
     for (int k = 0; k < col; ++k) {
       float sum = 0;
       for (int i = 0; i < row; ++i) {
-        sum = ADD(sum, (T)exp(t[l * (row * col) + k * row + i]));
+        sum = ADD(sum, Converter::ToFloat(exp((*t)[l * (row * col) + k * row + i])));
       }
       for (int j = 0; j < row; ++j) {
-        t[l * (row * col) + k * row + j] = DIV((T)exp(t[l * (row * col) + k * row + j]), sum);
+        (*t)[l * (row * col) + k * row + j] =
+          DIV(Converter::ToFloat(exp((*t)[l * (row * col) + k * row + j])), sum);
       }
     }
   }
@@ -121,12 +122,12 @@ void Function::deriv_softmax(Tensor<dim1, dim2, dim3, dim4, dim5, T> *t) {
     for (int k = 0; k < col; ++k) {
       float sum = 0;
       for (int i = 0; i < row; ++i) {
-        sum = ADD(sum, (T)exp(t[l * (row * col) + k * row + i]));
+        sum = ADD(sum, Converter::ToFloat(exp((*t)[l * (row * col) + k * row + i])));
       }
       for (int j = 0; j < row; ++j) {
         int idx = l*(row*col) + k*row + j;
-        t[idx] = exp(t[idx]) / sum;
-        t[idx] = t[idx] * (1.0 - Converter::ToFloat(t[idx]));
+        (*t)[idx] = exp((*t)[idx]) / sum;
+        (*t)[idx] *= (1.0 - Converter::ToFloat((*t)[idx]));
       }
     }
   }
