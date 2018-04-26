@@ -1,0 +1,10 @@
+version: 2
+jobs:
+  build:
+    steps:
+      - run:
+          name: Make
+          command: make utest -j5
+      - run:
+          name: Test
+          command: ./bin/utest
