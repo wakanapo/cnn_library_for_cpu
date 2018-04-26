@@ -1,12 +1,12 @@
 CXX := clang++
 PROTOC := protoc
-CXXFLAGS := -std=c++14 -Wall -O2 -pthread
+ENABLE_LOGGING := 0
+CXXFLAGS := -std=c++14 -Wall -O2 -pthread -DENABLE_LOGGING=$(ENABLE_LOGGING)
 LDFLAGS := -L/usr/local/lib `pkg-config --cflags --libs protobuf`
 TESTFLAGS := -lgtest_main -lgtest -lpthread `pkg-config --cflags --libs protobuf`
 
 GTESTDIR := $(shell echo "$(HOME)")/googletest-master
-GTEST_INCLUDEDIR := $(GTESTDIR)/googletest/include
-GTEST_LIBS := $(GTESTDIR)/build/googlemock/gtest
+GTEST_INCLUDEDIR := -I$(GTESTDIR)/googletest/include
 INCLUDES := -I./src -I./include
 BINDIR := bin
 OBJDIR := obj
@@ -21,9 +21,9 @@ TEST_SRCS := test/util_test.cc src/util/converter.cc src/protos/arithmatic.pb.cc
 PROTO_HEADERS := $(PROTOS:%.proto=%.pb.h)
 CNN_OBJS := $(CNN_SRCS:%.cc=$(OBJDIR)/%.o)
 GA_OBJS := $(GA_SRCS:%.cc=$(OBJDIR)/%.o)
-CNN_DEPS := $(CNN_SRCS:%.cc=%.d)
-GA_DEPS := $(GA_SRCS:%.cc=%.d)
-TEST_DEPS := $(TEST_SRCS:%.cc=%.d)
+CNN_DEPS := $(CNN_SRCS:%.cc=$(OBJDIR)/%.d)
+GA_DEPS := $(GA_SRCS:%.cc=$(OBJDIR)/%.d)
+TEST_DEPS := $(OBJDIR)/test/util_test.d
 
 .PHONY: all
 all: cnn ga utest
@@ -44,7 +44,8 @@ $(BINDIR)/ga: $(GA_OBJS) $(BINDIR)
 	$(CXX) -o $@ $(GA_OBJS) $(LDFLAGS)
 
 $(BINDIR)/utest: $(TEST_SRCS) $(BINDIR)
-	$(CXX) $(CXXFLAGS) -o $@ $(TEST_SRCS) -I$(GTEST_INCLUDEDIR) $(INCLUDES) -L$(GTEST_LIBDIR) $(TESTFLAGS)
+	@if [ ! -e  `dirname $(TEST_DEPS)` ]; then mkdir -p `dirname $(TEST_DEPS)`; fi
+	$(CXX) $(CXXFLAGS) $(GTEST_INCLUDEDIR) $(INCLUDES) -L$(GTEST_LIBDIR) $(TESTFLAGS) -o $@ $(TEST_SRCS) -MMD -MF $(TEST_DEPS)
 
 $(OBJDIR)/%.o: %.cc $(PROTO_HEADERS)
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi

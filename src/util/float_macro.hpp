@@ -56,9 +56,15 @@ T sub(const T a, const T b, const char* file, int line) {
   return ans;
 }
 
+#if ENABLE_LOGGING
 #define MUL(a, b) multiple(a, b, __FILE__, __LINE__)
 #define DIV(a, b) division(a, b, __FILE__, __LINE__)
 #define ADD(a, b) add(a, b, __FILE__, __LINE__)
 #define SUB(a, b) sub(a, b, __FILE__, __LINE__)
-
+#else
+#define MUL(a, b) ((a) * (b))
+#define DIV(a, b) ((a) / (b))
+#define ADD(a, b) ((a) + (b))
+#define SUB(a, b) ((a) - (b))
+#endif
 
