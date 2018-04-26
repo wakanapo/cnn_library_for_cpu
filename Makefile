@@ -5,8 +5,6 @@ CXXFLAGS := -std=c++14 -Wall -O2 -pthread -DENABLE_LOGGING=$(ENABLE_LOGGING)
 LDFLAGS := -L/usr/local/lib `pkg-config --cflags --libs protobuf`
 TESTFLAGS := -lgtest_main -lgtest -lpthread `pkg-config --cflags --libs protobuf`
 
-GTEST_INCLUDEDIR := -I./extsrc/googletest/googletest/include
-GTEST_LIBDIR := -L./extsrc/googletest/build/googlemock/gtest
 INCLUDES := -I./src -I./include
 BINDIR := bin
 OBJDIR := obj
@@ -45,7 +43,7 @@ $(BINDIR)/ga: $(GA_OBJS) $(BINDIR)
 
 $(BINDIR)/utest: $(TEST_SRCS) $(BINDIR)
 	@if [ ! -e  `dirname $(TEST_DEPS)` ]; then mkdir -p `dirname $(TEST_DEPS)`; fi
-	$(CXX) $(CXXFLAGS) $(GTEST_INCLUDEDIR) $(INCLUDES) $(GTEST_LIBDIR) $(TESTFLAGS) -o $@ $(TEST_SRCS) -MMD -MF $(TEST_DEPS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(TESTFLAGS) -o $@ $(TEST_SRCS) -MMD -MF $(TEST_DEPS)
 
 $(OBJDIR)/%.o: %.cc $(PROTO_HEADERS)
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi

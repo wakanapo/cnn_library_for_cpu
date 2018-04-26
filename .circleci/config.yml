@@ -1,17 +1,14 @@
 version: 2
 jobs:
-  clang_3_8:
+  build:
     docker:
-      - image: enumack/buildcontainers:clang-3.8
+      - image: wakanapo/protobuf
+    working_directory: ~/utokyo-kudohlab/cnn_library_for_cpu
     steps:
       - checkout
-      - run: cd extsrc/googletest/; mkdir build; cd build; cmake ..; make
-      - run: echo $PWD
-      - run: make utest -j5
-      - run: ./bin/utest
-
-workflows:
-  version: 2
-  build_anc_test:
-    jobs:
-      - clang_3_8
+      - run:
+          name: Make test
+          command: make utest -j5
+      - run:
+          name: Running tests
+          command: ./bin/utest
