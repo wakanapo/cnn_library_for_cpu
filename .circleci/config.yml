@@ -7,11 +7,8 @@ jobs:
     steps:
       - checkout
       - run: cd extsrc/googletest/
-      - run: mkdir build
-      - run: cd build
-      - run: cmake ..
-      - run: make
-      - run: cd ../../..
+      - run: cmake & make
+      - run: cd ../..
       - run: make utest -j5
       - run: ./bin/utest
 
