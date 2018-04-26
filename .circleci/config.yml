@@ -6,7 +6,7 @@ jobs:
       - image: enumack/buildcontainers:clang-3.8
     steps:
       - checkout
-      - run: cd extsrc/googletest/; mkdir build; cd build; cmake..; make
+      - run: cd extsrc/googletest/; mkdir build; cd build; cmake ..; make
       - run: echo $PWD
       - run: make utest -j5
       - run: ./bin/utest
