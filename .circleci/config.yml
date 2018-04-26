@@ -1,12 +1,10 @@
 version: 2
 jobs:
   clang_3_8:
-    working_directory: /cnn_library_for_cpu
     docker:
       - image: enumack/buildcontainers:clang-3.8
     steps:
       - checkout
-      - run: ls extsrc/googletest
       - run: cd extsrc/googletest/; mkdir build; cd build; cmake ..; make
       - run: echo $PWD
       - run: make utest -j5
