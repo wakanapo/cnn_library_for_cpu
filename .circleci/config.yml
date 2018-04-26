@@ -1,18 +1,19 @@
 version: 2
 jobs:
   clang_3_8:
+    working_directory: /cnn_library_for_cpu
     docker:
       - image: enumack/buildcontainers:clang-3.8
-      steps:
-        - checkout
-        - run: cd extsrc/googletest/
-        - run: mkdir build
-        - run: cd build
-        - run: cmake ..
-        - run: make
-        - run: cd ../../..
-        - run: make utest -j5
-        - rum: ./bin/utest
+    steps:
+      - checkout
+      - run: cd extsrc/googletest/
+      - run: mkdir build
+      - run: cd build
+      - run: cmake ..
+      - run: make
+      - run: cd ../../..
+      - run: make utest -j5
+      - run: ./bin/utest
 
 workflows:
   version: 2
