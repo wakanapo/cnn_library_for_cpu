@@ -610,6 +610,6 @@ TEST(OperatorTest, Add) {
   expected.set_v(expected_raw);
   Tensor2D<3, 2, float> actual;
 
-  actual = x + y;
+  actual = x - y;
   EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
