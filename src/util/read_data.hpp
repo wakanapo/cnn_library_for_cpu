@@ -136,7 +136,7 @@ template<typename ImageType, typename LabelType>
 Dataset<ImageType, LabelType> ReadMNISTData(Status st) {
   Dataset<ImageType, LabelType> data =
     {ReadMnistImages<ImageType>(st), ReadMnistLabels<LabelType>(st)};
-  std::cout << "Success read MNIST " <<
+  std::cerr << "Success read MNIST " <<
     (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
   return data;
 }
@@ -201,7 +201,7 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
     images.push_back(image);
   }
   fclose(fp);
-  std::cout << "Success read Cifar100 " <<
+  std::cerr << "Success read Cifar100 " <<
     (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
   return {images, labels};
 }
@@ -254,7 +254,7 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
     images.push_back(image);
   }
   fclose(fp);
-  std::cout << "Success read Cifar10 " <<
+  std::cerr << "Success read Cifar10 " <<
     (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
   return {images, labels};
 }
