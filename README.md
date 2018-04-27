@@ -19,7 +19,7 @@ $ make -j4
 $ make ga
 
 $ ./bin/ga
-``` 
+```
 **CNN**
 ```
 $ make bin/cnn
