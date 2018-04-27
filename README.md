@@ -8,21 +8,18 @@
 **Python** (重みやデータの生成用）
 * numpy
 * pickle
-* scikit-learn
 
 ## ビルド方法
 **ALL**
 ```
 $ make -j4
 ```
-**MLP**
+**GA**
 ```
-$ make bin/mlp
+$ make ga
 
-$ ./bin/mlp test  # 推論の場合
-
-$ ./bin/mlp train  # 学習の場合
-``` 
+$ ./bin/ga
+```
 **CNN**
 ```
 $ make bin/cnn
@@ -33,7 +30,7 @@ $ ./bin/cnn train  # 学習の場合
 ```
 **テスト**
 ```
-$ make bin/utest
+$ make utest
 
 $ ./bin/utest
 ```
@@ -44,40 +41,25 @@ $ make clean
 
 ※Stack Overflowした場合
 ```
-$ ulimit -s 16384
+$ ulimit -s unlimited
 ```
 
 ## コード構成
 ### src/util
 * function.hpp : 活性化関数や畳込み、プーリングなど基本的な関数が実装されている
 * tensor.hpp : 多次元配列を扱うTensorクラスを定義している
-* read\_data.cpp, read\_data.hpp : MNISTのデータの読み込みをするクラス
+* read\_data.cpp, read\_data.hpp : データの読み込みをするクラス
 
 ### src/cnn
 * cnn.hpp : CNNクラスを定義している
-
-### src/mlp
-* mlp.hpp : MLPクラスを定義している
-
-### src/python
-* make\_cnn\_weight.py : cnnの重みを定義するcnn_weight.hppを生成するファイル
-* make\_mlp\_weight.py : mlpの重みを定義するmlp_weight.hppを生成するファイル
-* make\_mnist\_data.py : mnistのデータを定義するmnist_data.hppを生成するファイル
-* make\_test\_array.py : テスト用の配列を定義するtest_array.hppを生成するファイル
 
 ### test/
 * util_test.cpp : いろいろな関数のテストが実装されている
 
 ## 実装上のルール
-### For FPGA
-* std::vector, std::arrayはVivado HLSでサポートされていないので原則Tensorクラスか配列を使う
-* malloc, freeを使わず、メモリ確保はtemplateを使うなどして静的に行う
-* Vivado HLSでサポートされていないものを使うときはコメントを入れる
-* templateを多様することになるため基本的に実装はすべてヘッダファイルに書くことになるはず
-
 ### For Maintainability
 * 関数を実装したらテストを書く
-* マージする前にテストが通っていることを確認する（CIとかと連携させてテストが通らないとマージできない設定にしたい...）
+* マージする前にテストが通っていることを確認する
 * pull requestはできるだけ細かくする
 * branchも細かく切る
 * コードレビューしてもらってからマージ
