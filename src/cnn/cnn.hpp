@@ -65,7 +65,7 @@ void CNN<ModelType>::training() {
         model.train(train.images[i], train.labels[i], eps);
       }
     }
-    std::cout << "Finish Train." << std::endl;
+    std::cerr << "Finish #" << k << " train." << std::endl;
 
     std::vector<std::future<int>> futures;
     int per_cpu = 4096 / CPU_NUM;

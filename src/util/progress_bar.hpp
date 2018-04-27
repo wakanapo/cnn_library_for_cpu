@@ -20,7 +20,7 @@ bool progressBar(int i, int n) {
     std::cerr << fill_bar.substr(0, 3*progress)
               << null_bar.substr(0, 3*(100 - progress));
     fprintf(stderr, "| %d/%d", i+1, n);
-    progress == 100 ? std::cout << std::endl : std::cout << std::flush;
+    progress == 100 ? std::cerr << std::endl : std::cout << std::flush;
     return true;
   }
   return false;
