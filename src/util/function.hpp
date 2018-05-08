@@ -217,15 +217,18 @@ void Function::max_pool(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
       for (int j = 0; j < ans_dim[0]; ++j){
 
         T max = std::numeric_limits<T>::lowest();
-        for (int c = 0; c < k_col; ++c)
-          for (int r = 0; r < k_row; ++r)
+        for (int c = 0; c < k_col; ++c) {
+          for (int r = 0; r < k_row; ++r) {
+            if (i*s+c >= dim[1] || j*s+r >= dim[0])
+              continue;
             if (max < t[k*(dim[1]*dim[0]) + (i*s+c)*dim[0] + (j*s+r)]) {
               max = (*ans)[k*(ans_dim[1]*ans_dim[0]) + i*ans_dim[0] + j] =
                 t[k*(dim[1]*dim[0]) + (i*s+c)*dim[0] + (j*s+r)];
               (*idx)[k*(ans_dim[1]*ans_dim[0]) + i*ans_dim[0] + j] =
                 k*(dim[1]*dim[0]) + (i*s+c)*dim[0] + (j*s+r);
             }
-
+          }
+        }
       }
     }
   }
