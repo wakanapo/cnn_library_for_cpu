@@ -6,12 +6,13 @@
 #include "cnn/vgg.hpp"
 #include "cnn/small_cnn_for_cifar.hpp"
 #include "cnn/simple_conv_net.hpp"
+#include "cnn/hinton_cifar10.hpp"
 #include "half.hpp"
 #include "util/box_quant.hpp"
 
 using half_float::half;
 template<typename T>
-using Model = VGG<T>;
+using Model = HintonCifar10<T>;
 
 int main(int argc, char* argv[]) {
   Options::ParseCommandLine(argc, argv);
