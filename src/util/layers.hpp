@@ -141,15 +141,15 @@ class Pooling {
 public:
   template<int dim1, int dim2, int dim3>
   void forward(const Tensor3D<dim1, dim2, dim3, T>& x,
-               Tensor3D<static_ceil((dim1+2*P-k_row)/(float)S)+1,
-               static_ceil((dim2+2*P-k_col)/(float)S)+1, dim3, T>* ans,
-               Tensor1D<static_ceil(((dim1+2*P-k_row)/(float)S)+1)*
-               static_ceil(((dim2+2*P-k_col)/(float)S)+1)*dim3, int>* idx) const;
+               Tensor3D<static_ceil((dim1+2*P-k_row+S)/(float)S),
+               static_ceil((dim2+2*P-k_col+S)/(float)S), dim3, T>* ans,
+               Tensor1D<static_ceil((dim1+2*P-k_row+S)/(float)S)*
+               static_ceil((dim2+2*P-k_col+S)/(float)S)*dim3, int>* idx) const;
   template<int dim1, int dim2, int dim3>
-  void backward(const Tensor3D<static_ceil((dim1+2*P-k_row)/(float)S)+1,
-                static_ceil((dim2+2*P-k_col)/(float)S)+1, dim3, T>& delta,
-                const Tensor1D<static_ceil(((dim1+2*P-k_row)/(float)S)+1) *
-                static_ceil(((dim2+2*P-k_col)/(float)S)+1)*dim3, int>& idx,
+  void backward(const Tensor3D<static_ceil((dim1+2*P-k_row+S)/(float)S),
+                static_ceil((dim2+2*P-k_col+S)/(float)S), dim3, T>& delta,
+                const Tensor1D<static_ceil((dim1+2*P-k_row+S)/(float)S) *
+                static_ceil((dim2+2*P-k_col+S)/(float)S)*dim3, int>& idx,
                 Tensor3D<dim1, dim2, dim3, T>* ans) const;
 private:
   int stride_ = S;
@@ -160,20 +160,20 @@ template<int k_row, int k_col, int P, int S, typename T>
 template<int dim1, int dim2, int dim3>
 void Pooling<k_row, k_col, P, S, T>
 ::forward(const Tensor3D<dim1, dim2, dim3, T> &x,
-          Tensor3D<static_ceil((dim1+2*P-k_row)/(float)S)+1,
-          static_ceil((dim2+2*P-k_col)/(float)S)+1, dim3, T> *ans,
-          Tensor1D<static_ceil(((dim1+2*P-k_row)/(float)S)+1)*
-          static_ceil(((dim2+2*P-k_col)/(float)S)+1)*dim3, int> *idx) const {
+          Tensor3D<static_ceil((dim1+2*P-k_row+S)/(float)S),
+          static_ceil((dim2+2*P-k_col+S)/(float)S), dim3, T> *ans,
+          Tensor1D<static_ceil((dim1+2*P-k_row+S)/(float)S)*
+          static_ceil((dim2+2*P-k_col+S)/(float)S)*dim3, int> *idx) const {
   Function::max_pool(x, k_row, k_col, ans, idx, P, S);
 }
 
 template<int k_row, int k_col, int P, int S, typename T>
 template<int dim1, int dim2, int dim3>
 void Pooling<k_row, k_col, P, S, T>
-::backward(const Tensor3D<static_ceil((dim1+2*P-k_row)/(float)S)+1,
-           static_ceil((dim2+2*P-k_col)/(float)S)+1, dim3, T>& delta,
-           const Tensor1D<static_ceil(((dim1+2*P-k_row)/(float)S)+1) *
-           static_ceil(((dim2+2*P-k_col)/(float)S)+1)*dim3, int>& idx,
+::backward(const Tensor3D<static_ceil((dim1+2*P-k_row+S)/(float)S),
+           static_ceil((dim2+2*P-k_col+S)/(float)S), dim3, T>& delta,
+           const Tensor1D<static_ceil((dim1+2*P-k_row+S)/(float)S) *
+           static_ceil((dim2+2*P-k_col+S)/(float)S)*dim3, int>& idx,
            Tensor3D<dim1, dim2, dim3, T>* ans) const {
   Function::depool(delta, idx, ans);
 }
