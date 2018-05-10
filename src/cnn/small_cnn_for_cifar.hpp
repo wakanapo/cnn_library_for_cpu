@@ -12,11 +12,11 @@ class SmallCNNForCifar {
 public:
   using Type = T;
   using InputType = Tensor3D<32, 32, 3, T>;
-  using OutputType = Tensor1D<100, T>;
+  using OutputType = Tensor1D<10, T>;
   SmallCNNForCifar() : Conv1(Convolution<3, 3, 3, 32, 0, 1, T>(-0.1, 0.1)),
                        Conv2(Convolution<3, 3, 32, 32, 0, 1, T>(-0.1, 0.1)),
                        Conv3(Convolution<3, 3, 32, 64, 0, 1, T>(-0.1, 0.1)),
-                       Affine1(Affine<5*5*64, 100, T>(-0.1, 0.1)) {};
+                       Affine1(Affine<5*5*64, 10, T>(-0.1, 0.1)) {};
   void train(const InputType& x, const OutputType& t, const T& eps);
   unsigned long predict(const InputType& x) const;
   void save();
@@ -32,7 +32,7 @@ private:
   Convolution<3, 3, 32, 64, 0, 1, T> Conv3;
   Relu<T> Relu3;
   Pooling<2, 2, 0, 2, T> Pool3;
-  Affine<5*5*64, 100, T> Affine1;
+  Affine<5*5*64, 10, T> Affine1;
   Sigmoid<T> Last;
 };
 
@@ -64,12 +64,12 @@ void SmallCNNForCifar<T>::train(const typename SmallCNNForCifar<T>::InputType& x
   Pool3.forward(conv3_ans, &pool3_ans, &idx3);
 
   Tensor1D<5*5*64, T> dense1 = pool3_ans.flatten();
-  Tensor1D<100, T> ans;
+  Tensor1D<10, T> ans;
   Affine1.forward(dense1, &ans);
   Last.forward(&ans);
 
   // Backward
-  Tensor1D<100, T> delta2 = ans - t;
+  Tensor1D<10, T> delta2 = ans - t;
   Tensor1D<5*5*64, T> delta1;
   Affine1.backward(delta2, dense1, &delta1, eps);
 
@@ -120,13 +120,13 @@ unsigned long SmallCNNForCifar<T>
   Pool3.forward(conv3_ans, &pool3_ans, &idx3);
 
   Tensor1D<5*5*64, T> dense1 = pool3_ans.flatten();
-  Tensor1D<100, T> ans;
+  Tensor1D<10, T> ans;
   Affine1.forward(dense1, &ans);
   Last.forward(&ans);
 
   T max = (T)0;
   unsigned long argmax = 0;
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 10; ++i) {
     if (ans[i] > max) {
       max = ans[i];
       argmax = i;
@@ -156,13 +156,13 @@ void SmallCNNForCifar<T>::load() {
     std::cerr << "Failed to load params." << std::endl;
   }
   Conv1.loadParams(&params, 0);
-  Conv2.loadParams(&params, 0);
-  Conv3.loadParams(&params, 0);
-  Affine1.loadParams(&params, 1);
+  Conv2.loadParams(&params, 1);
+  Conv3.loadParams(&params, 2);
+  Affine1.loadParams(&params, 3);
 }
 
 template<typename T>
 Dataset<typename SmallCNNForCifar<T>::InputType, typename SmallCNNForCifar<T>::OutputType>
 SmallCNNForCifar<T>::readData(Status st) {
-  return ReadCifar100Data<InputType, OutputType>(st, FINE);
+  return ReadCifar10Data<InputType, OutputType>(st);
 }
