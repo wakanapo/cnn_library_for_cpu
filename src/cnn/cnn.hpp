@@ -19,7 +19,7 @@
 #include "protos/cnn_params.pb.h"
 #include "protos/arithmatic.pb.h"
 
-#define CPU_NUM 4
+#define CPU_NUM 20
 
 template <typename ModelType>
 class CNN {
@@ -38,8 +38,8 @@ void CNN<ModelType>::training() {
   Dataset<InputType, OutputType> test = model.readData(TEST);
 
   Type eps = (Type)0.01;
-  int epoch = 10;
-  int image_num = 5000;
+  int epoch = 5;
+  int image_num = 10000;
 
   for (int k = 0; k < epoch; ++k) {
     std::cout << "--------epoch " << k << "--------" << std::endl;
@@ -68,7 +68,7 @@ void CNN<ModelType>::training() {
     std::cerr << "Finish #" << k << " train." << std::endl;
 
     std::vector<std::future<int>> futures;
-    int per_cpu = 4096 / CPU_NUM;
+    int per_cpu = test.images.size() / CPU_NUM;
     auto start = std::chrono::steady_clock::now();
     for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
       futures.push_back(std::async(std::launch::async, [cpu, &model, &test, &per_cpu] {
@@ -92,7 +92,7 @@ void CNN<ModelType>::training() {
               << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
               << " sec."
               << std::endl;
-    std::cout << "Accuracy: " << (float)sum / (float)4096 << std::endl;
+    std::cout << "Accuracy: " << (float)sum / (float)test.images.size() << std::endl;
   }
   if (Options::IsSaveParams())
     model.save();
@@ -105,12 +105,13 @@ void CNN<ModelType>::inference() {
 
   model.load();
   std::vector<std::future<int>> futures;
-  int par_cpu = 4096 / CPU_NUM;
+  int per_cpu = test.images.size() / CPU_NUM;
   auto start = std::chrono::steady_clock::now();
   for (int cpu = 0; cpu < CPU_NUM; ++ cpu) {
-    futures.push_back(std::async(std::launch::async, [&] {
+    futures.push_back(std::async(std::launch::async, [cpu, &model, &test, &per_cpu] {
+          std::cout << "CPU#" << cpu << " start." << std::endl;
           int cnt = 0;
-          for (int i = par_cpu * cpu; i < par_cpu * (cpu + 1); ++i) {
+          for (int i = per_cpu * cpu; i < per_cpu * (cpu + 1); ++i) {
             unsigned long y = model.predict(test.images[i]);
             if (Options::IsSaveArithmetic())
               p.Clear();
@@ -120,17 +121,16 @@ void CNN<ModelType>::inference() {
           return cnt;
         }));
   }
-  auto end = std::chrono::steady_clock::now();
   int sum = 0;
   for (auto &f : futures) {
     sum += f.get();
   }
-  auto diff = end - start;
+  auto diff = std::chrono::steady_clock::now() - start;
   std::cout << "Inference time = "
             << std::chrono::duration_cast<std::chrono::minutes>(diff).count()
             << " min."
             << std::endl;
-  std::cout << "Accuracy: " << (float)sum / (float)4096 << std::endl;
+  std::cout << "Accuracy: " << (float)sum / (float)test.images.size() << std::endl;
 }
 
 
