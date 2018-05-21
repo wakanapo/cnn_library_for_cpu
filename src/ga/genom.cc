@@ -9,29 +9,31 @@
 #include <thread>
 #include <vector>
 
+#include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
+#include "util/flags.hpp"
 #include "util/read_data.hpp"
 #include "ga/set_gene.hpp"
 #include "protos/genom.pb.h"
 
-Data Genom::test_X_ = ReadMnistImages<float>(TEST);
-Data Genom::test_y_ = ReadMnistImages<float>(TEST);
+using Model = HintonCifar10<float>;
+Dataset<typename Model::InputType, typename Model::OutputType> test =
+  ReadCifar10Data<typename Model::InputType,
+                  typename Model::OutputType>(TEST);
 
 void Genom::executeEvaluation() {
-  CNN<float> cnn;
-  Tensor2D<28, 28, float> x;
-  cnn.simple_load("float_params.pb");
+  Model model;
+  model.load();
 
   int cnt = 0;
-  for (int i = 0; i < 3000; ++i) {
-    x.set_v((float*)test_X_.ptr_ + i * x.size(1) * x.size(0));
-    unsigned long y = cnn.simple_predict(x);
-    if (y == ((unsigned long*)test_y_.ptr_)[i])
+  for (int i = 0; i < 4096; ++i) {
+    unsigned long y = model.predict(test.images[i]);
+    if (OneHot<Model::OutputType>(y) == test.labels[i])
       ++cnt;
   }
 
-  evaluation_ = (float)cnt / (float)3000;
+  evaluation_ = (float)cnt / (float)4096;
 }
 
 std::vector<Genom> GeneticAlgorithm::selectElite() const {
@@ -149,7 +151,7 @@ void GeneticAlgorithm::save(std::string filename) {
 }
 
 void GeneticAlgorithm::run(std::string filepath) {
-  for (int i = 0; i < max_generation_; ++i) {
+  for (int i = 0; progressBar(i, max_generation_); ++i) {
     auto start = std::chrono::system_clock::now();
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
@@ -185,10 +187,11 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(8, 10, 2, 0.05, 0.05, 3);
-  if (argc != 2) {
-    std::cout << "Usage: ./bin/ga filepath" << std::endl;
-    abort();
+  GeneticAlgorithm ga(16, 100, 20, 0.05, 0.05, 50);
+  if (argc != 3) {
+    std::cout << "Usage: ./bin/ga test filepath" << std::endl;
+    return 1;
   }
-  ga.run(argv[1]);
+  Options::ParseCommandLine(argc, argv);
+  ga.run("hinton_ga");
 }
