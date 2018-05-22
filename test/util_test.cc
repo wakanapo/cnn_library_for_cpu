@@ -481,6 +481,7 @@ TEST(MaxPoolTest, Stride1) {
                    87, 82, 81, 80, 74,
                    87, 87, 85, 77, 66,
                    84, 79, 77, 78, 76};
+
   Tensor2D<5, 5, float> x;
   x.set_v(x_raw);
 
@@ -514,6 +515,28 @@ TEST(MaxPoolTest, Stride2) {
   Tensor1D<4, int> idx;
 
   Function::max_pool(x, 2, 2, &actual, &idx, 0, 2);
+  EXPECT_EQ(fmemcmp(expected, actual), 0);
+}
+
+TEST(MaxPoolTest, OddStride2) {
+  float x_raw[] = {1, 2, 3, 4, 5, 6,
+                   2, 3, 4, 5, 6, 1,
+                   3, 4, 5, 6, 1, 2,
+                   4, 5, 6, 1, 2, 3,
+                   5, 6, 1, 2, 3, 4,
+                   6, 5, 4, 3, 2, 1};
+  Tensor2D<6, 6, float> x;
+  x.set_v(x_raw);
+
+  float expected_raw[] = {5, 6, 6,
+                          6, 6, 4,
+                          6, 4, 4};
+  Tensor2D<3, 3, float> expected;
+  expected.set_v(expected_raw);
+  Tensor2D<3, 3, float> actual;
+  Tensor1D<9, int> idx;
+
+  Function::max_pool(x, 3, 3, &actual, &idx, 0, 2);
   EXPECT_EQ(fmemcmp(expected, actual), 0);
 }
 

@@ -2,6 +2,7 @@
 
 #include "cnn/cnn.hpp"
 #include "ga/first_genoms.hpp"
+#include "util/read_data.hpp"
 
 class Genom {
 public:
@@ -15,8 +16,6 @@ public:
 private:
   std::vector<float> genom_list_;
   float evaluation_;
-  static Data test_X_;
-  static Data test_y_;
 };
 
 class GeneticAlgorithm {
