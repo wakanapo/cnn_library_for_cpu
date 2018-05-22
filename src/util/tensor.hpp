@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include <iostream>
 #include <typeinfo>
 #include <random>
@@ -25,6 +26,10 @@ public:
   void set_v(T_prime* v_in);
   void set_v(std::array<T, kSize> v_in);
   std::array<T, kSize> get_v();
+  typename std::array<T, kSize>::iterator begin();
+  typename std::array<T, kSize>::const_iterator begin() const;
+  typename std::array<T, kSize>::iterator end();
+  typename std::array<T, kSize>::const_iterator end() const;
   Tensor<dim1*dim2*dim3*dim4*dim5, 1, 1, 1, 1, T> flatten() const;
   const T& operator[](const int i) const;
   T &operator[](const int i);
@@ -60,9 +65,7 @@ Shape Tensor<dim1, dim2, dim3, dim4, dim5, T>::shape() const {
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 template <typename T_prime>
 void Tensor<dim1, dim2, dim3, dim4, dim5, T>::set_v(T_prime* v_in) {
-  for (int i = 0; i < kSize; ++i) {
-      v_[i] = v_in[i];
-  }
+  std::memmove(&(v_[0]), v_in, kSize*sizeof(T));
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
@@ -88,13 +91,36 @@ void Tensor<dim1, dim2, dim3, dim4, dim5, T>::randomInit(float low, float high) 
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Tensor<dim1, dim2, dim3, dim4, dim5, T>::init() {
-  for (int i = 0; i < kSize; ++i)
-    v_[i] = 0;
+  v_.fill(0);
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize> Tensor<dim1, dim2, dim3, dim4, dim5, T>::get_v() {
   return v_;
+}
+
+template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
+typename std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize>::iterator
+Tensor<dim1, dim2, dim3, dim4, dim5, T>::begin() {
+  return v_.begin();
+}
+
+template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
+typename std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize>::const_iterator
+Tensor<dim1, dim2, dim3, dim4, dim5, T>::begin() const {
+  return v_.begin();
+}
+
+template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
+typename std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize>::const_iterator
+Tensor<dim1, dim2, dim3, dim4, dim5, T>::end() const {
+  return v_.end();
+}
+
+template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
+typename std::array<T, Tensor<dim1, dim2, dim3, dim4, dim5, T>::kSize>::iterator
+Tensor<dim1, dim2, dim3, dim4, dim5, T>::end() {
+  return v_.end();
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
