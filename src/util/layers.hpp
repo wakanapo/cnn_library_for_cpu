@@ -128,14 +128,6 @@ void Convolution<w_row, w_col, input, output, P, S, T>
   b_ = b_ - delta_b;
 }
 
-constexpr int32_t static_ceil(float num) noexcept {
-  std::int32_t inum = static_cast<std::int32_t>(num);
-  if (num == static_cast<float>(inum)) {
-    return inum;
-  }
-  return inum + (num > 0 ? 1 : 0);
-}
-
 template<int k_row, int k_col, int P, int S, typename T>
 class Pooling {
 public:
