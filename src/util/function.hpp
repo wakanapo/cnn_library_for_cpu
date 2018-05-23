@@ -261,13 +261,13 @@ void Function::padding(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& before,
   ans->init();
   int col = before.shape()[1];
   int row = before.shape()[0];
-  for (int k = 0; k < before.size() / (col*row); ++k) {
+  int image_size = col * row;
+  int pad_image_size = dim1_p * dim2_p;
+  for (int channel = 0; channel < before.size() / (col*row); ++channel) {
     for (int i = 0; i < col; ++i) {
-      for (int j = 0; j < row; ++j) {
-        (*ans)[k*ans->shape()[1]*ans->shape()[0]
-               + (i+pad)*ans->shape()[0] + (j+pad)]
-          = before[k*col*row + i*row + j];
-      }
+        std::copy(before.begin() + channel*image_size + i*row,
+                  before.begin() + channel*image_size + (i+1)*row,
+                  ans->begin() + channel*pad_image_size + (i+pad)*(row+2*pad) + pad);
     }
   }
 }
