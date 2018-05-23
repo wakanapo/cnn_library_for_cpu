@@ -91,7 +91,7 @@ void Tensor<dim1, dim2, dim3, dim4, dim5, T>::randomInit(float low, float high) 
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 void Tensor<dim1, dim2, dim3, dim4, dim5, T>::init() {
-  v_.fill(0);
+  v_.fill((T)0);
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
