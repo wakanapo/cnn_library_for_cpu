@@ -237,7 +237,7 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
   }
 
   int number_of_images = (st == TRAIN) ? 50000 : 10000;
-  // int image_size = 32 * 32 * 3;
+  int image_size = 32 * 32 * 3;
 
   std::vector<ImageType> images(number_of_images);
   std::vector<LabelType> labels(number_of_images);
