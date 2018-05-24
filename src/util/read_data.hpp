@@ -203,7 +203,7 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
   auto start = std::chrono::steady_clock::now();
   std::ifstream ifs((st == TRAIN ? kCifar10TrainDataFilePath :
                      kCifar10TestDataFilePath), std::ios::binary);
-  if (!ifs.is_open()) {
+  if (!ifs) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
   }
