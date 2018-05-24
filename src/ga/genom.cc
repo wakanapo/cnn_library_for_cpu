@@ -154,7 +154,7 @@ void GeneticAlgorithm::run() {
   std::string filepath = Options::GetWeightsOutput();
   std::ofstream ofs("csv/ga.csv", std::ofstream::out | std::ofstream::app);
   ofs << filepath << ", " << genom_length_ << ", " << genom_num_ << ", "
-      << elite_num_ << ", " << individual_mutation_ << ", "<< genom_mutation_
+      << elite_num_ << ", " << individual_mutation_ << ", " << genom_mutation_
       << ", " << max_generation_ << std::endl;
   ofs.close();
 
