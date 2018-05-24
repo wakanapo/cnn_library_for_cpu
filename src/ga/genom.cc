@@ -150,11 +150,18 @@ void GeneticAlgorithm::save(std::string filename) {
     std::cerr << "Failed to save genoms." << std::endl;
 }
 
-void GeneticAlgorithm::run(std::string filepath) {
+void GeneticAlgorithm::run() {
+  std::string filepath = Options::GetWeightsOutput();
+  std::ofstream ofs("csv/ga.csv", std::ofstream::out | std::ofstream::app);
+  ofs << filepath << ", " << genom_length_ << ", " << genom_num_ << ", "
+      << elite_num_ << ", " << individual_mutation_ << ", "<< genom_mutation_
+      << ", " << max_generation_ << std::endl;
+  ofs.close();
+
   for (int i = 0; progressBar(i, max_generation_); ++i) {
     auto start = std::chrono::system_clock::now();
     std::vector<std::thread> threads;
-    /* 各遺伝子の評価*/
+    /* 各遺伝子の評価 */
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
         threads.push_back(std::thread([&genom] {
@@ -188,10 +195,10 @@ void GeneticAlgorithm::run(std::string filepath) {
 
 int main(int argc, char* argv[]) {
   GeneticAlgorithm ga(16, 100, 20, 0.05, 0.05, 50);
-  if (argc != 3) {
-    std::cout << "Usage: ./bin/ga test filepath" << std::endl;
+  if (argc != 2) {
+    std::cout << "Usage: ./bin/ga test" << std::endl;
     return 1;
   }
   Options::ParseCommandLine(argc, argv);
-  ga.run("hinton_ga");
+  ga.run();
 }

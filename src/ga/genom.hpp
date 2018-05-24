@@ -33,7 +33,7 @@ public:
   std::vector<Genom> crossover(std::vector<Genom> parents) const;
   void nextGenerationGeneCreate(std::vector<Genom>& progenies);
   void mutation();
-  void run(std::string filename);
+  void run();
   void save(std::string filepath);
   void print(int i);
 private:
