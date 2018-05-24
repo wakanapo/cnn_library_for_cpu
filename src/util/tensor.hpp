@@ -17,6 +17,7 @@ private:
   static constexpr int kSize = dim1*dim2*dim3*dim4*dim5;
   std::array<T, kSize> v_;
 public:
+  using Type = T;
   int size() const;
   int bytes() const;
   Shape shape() const;
