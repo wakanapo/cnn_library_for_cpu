@@ -230,4 +230,3 @@ using Tensor4D = Tensor<dim1, dim2, dim3, dim4, 1, T>;
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
 using Tensor5D = Tensor<dim1, dim2, dim3, dim4, dim5, T>;
-
