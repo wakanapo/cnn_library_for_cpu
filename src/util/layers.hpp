@@ -6,12 +6,22 @@
 #include "util/tensor.hpp"
 #include "protos/cnn_params.pb.h"
 
+template<typename WEIGHT_T, typename BIAS_T>
+struct Params {
+  WEIGHT_T weights;
+  BIAS_T biases;
+};
+
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
 class Convolution {
 public:
+  using WeightType = Tensor4D<w_row, w_col, input, output, T>;
+  using BiasType = Tensor1D<output, T>;
   Convolution(const float low, const float high);
   void loadParams(CnnProto::Params* p, int idx);
   void saveParams(CnnProto::Params* p) const;
+  Params<WeightType, BiasType> getParams() const;
+  void setParams(Params<WeightType, BiasType> params);
   template<int x_row, int x_col, int a_row, int a_col>
   void forward(const Tensor3D<x_row, x_col, input, T>& x,
                Tensor3D<a_row, a_col, output, T>* ans) const;
@@ -22,8 +32,8 @@ public:
 private:
   int stride_ = S;
   int padding_ = P;
-  Tensor4D<w_row, w_col, input, output, T> w_;
-  Tensor1D<output, T> b_;
+  WeightType w_;
+  BiasType b_;
   template<int x_row, int x_col>
   void update_w(const Tensor3D<(x_row+2*P-w_row)/S+1, (x_col+2*P-w_col)/S+1, output, T>& delta,
                 const Tensor3D<x_row, x_col, input, T>& x, const T& eps);
@@ -57,6 +67,21 @@ void Convolution<w_row, w_col, input, output, P, S, T>
     w->mutable_w()->Add(Converter::ToFloat(w_[i]));
   for (int i = 0; i < b_.size(); ++i)
     b->mutable_b()->Add(Converter::ToFloat(b_[i]));
+}
+
+template<int w_row, int w_col, int input, int output, int P, int S, typename T>
+Params<typename Convolution<w_row, w_col, input, output, P, S, T>::WeightType,
+       typename Convolution<w_row, w_col, input, output, P, S, T>::BiasType>
+Convolution<w_row, w_col, input, output, P, S, T>::getParams() const {
+  return {w_, b_};
+}
+
+template<int w_row, int w_col, int input, int output, int P, int S, typename T>
+void Convolution<w_row, w_col, input, output, P, S, T>
+::setParams(Params<typename Convolution<w_row, w_col, input, output, P, S, T>::WeightType,
+typename Convolution<w_row, w_col, input, output, P, S, T>::BiasType> params) {
+  w_ = params.weights;
+  b_ = params.biases;
 }
 
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>

@@ -1,9 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <tuple>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "util/flags.hpp"
@@ -17,10 +20,10 @@ namespace {
   const int kExpectImageMagicNumber = 2051;
   const int kExpectLabelMagicNumber = 2049;
 
-  const char* kCifar100TestDataFilePath = "data/cifar-100-binary/test.bin";
-  const char* kCifar100TrainDataFilePath = "data/cifar-100-binary/train.bin";
-  const char* kCifar10TestDataFilePath = "data/cifar-10-binary/test.bin";
-  const char* kCifar10TrainDataFilePath = "data/cifar-10-binary/train.bin";
+  const std::string kCifar100TestDataFilePath = "data/cifar-100-binary/test.bin";
+  const std::string kCifar100TrainDataFilePath = "data/cifar-100-binary/train.bin";
+  const std::string kCifar10TestDataFilePath = "data/cifar-10-binary/test.bin";
+  const std::string kCifar10TrainDataFilePath = "data/cifar-10-binary/train.bin";
 }
 
 enum Status {
@@ -148,59 +151,47 @@ enum CifarClass {
 
 template<typename ImageType, typename LabelType>
 Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_class) {
-  FILE *fp =  fopen((st == TRAIN) ? kCifar100TrainDataFilePath :
-                    kCifar100TestDataFilePath, "rb");
-  if (fp == NULL) {
+  std::fstream ifs((st == TRAIN) ? kCifar100TrainDataFilePath :
+                   kCifar100TestDataFilePath, std::ios::binary);
+  if (!ifs) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
   }
 
   int number_of_images = (st == TRAIN) ? 50000 : 10000;
-  int number_of_rows = 32;
-  int number_of_cols = 32;
-  int number_of_channels = 3;
+  int image_size = 32 * 32 * 3;
 
-  int image_2d = number_of_rows * number_of_cols;
+  std::vector<ImageType> images(number_of_images);
+  std::vector<LabelType> labels(number_of_images);
 
-  std::vector<ImageType> images;
-  std::vector<LabelType> labels;
+  for (int i = 0; i < number_of_images; ++i) {
+    unsigned char label;
 
-  for (int n = 0; n < number_of_images; ++n) {
-    ImageType image;
-    LabelType label;
-    unsigned char temp = 0;
-    size_t err = fread(&temp, sizeof(temp), 1, fp);
-    if (err < 1) {
-      std::cerr << "File read error!" << std::endl;
+    ifs.read((char*)&label, sizeof(char));
+    if (!ifs) {
+      std::cerr << "Read label error!" << std::endl;
       exit(1);
     }
     if (c_class == COARSE)
-      label = OneHot<LabelType>((unsigned long)temp);
-    err = fread(&temp, sizeof(temp), 1, fp);
-    if (err < 1) {
-      std::cerr << "File read error!" << std::endl;
+      labels[i] = OneHot<LabelType>((unsigned long)label);
+    ifs.read((char*)&label, sizeof(char));
+    if (!ifs) {
+      std::cerr << "Read label error!" << std::endl;
       exit(1);
     }
     if (c_class == FINE)
-      label = OneHot<LabelType>((unsigned long)temp);
+      labels[i] = OneHot<LabelType>((unsigned long)label);
 
-    for (int i = 0; i < number_of_channels; ++i) {
-      for (int j = 0; j < number_of_cols; ++j) {
-        for (int k = 0; k < number_of_rows; ++k) {
-          err = fread(&temp, sizeof(temp), 1, fp);
-          if (err < 1) {
-            std::cerr << "File read error!" << std::endl;
-            exit(1);
-          }
-          image[i * image_2d + j * number_of_rows + k]
-            = temp / 255.0;
-        }
-      }
+    unsigned char image[image_size];
+    ifs.read((char*)image, sizeof(image));
+    if (!ifs) {
+      std::cerr << "Read image error!" << std::endl;
+      exit(1);
     }
-    labels.push_back(label);
-    images.push_back(image);
+    for (int j = 0; j < image_size; ++j) {
+      images[i][j] = image[j] / 255.0;
+    }
   }
-  fclose(fp);
   std::cerr << "Success read Cifar100 " <<
     (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
   return {images, labels};
@@ -209,52 +200,43 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
 
 template<typename ImageType, typename LabelType>
 Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
-  FILE *fp =  fopen((st == TRAIN) ? kCifar10TrainDataFilePath :
-                    kCifar10TestDataFilePath, "rb");
-  if (fp == NULL) {
+  auto start = std::chrono::steady_clock::now();
+  std::ifstream ifs((st == TRAIN ? kCifar10TrainDataFilePath :
+                     kCifar10TestDataFilePath), std::ios::binary);
+  if (!ifs) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
   }
 
   int number_of_images = (st == TRAIN) ? 50000 : 10000;
-  int number_of_rows = 32;
-  int number_of_cols = 32;
-  int number_of_channels = 3;
+  int image_size = 32 * 32 * 3;
 
-  int image_2d = number_of_rows * number_of_cols;
+  std::vector<ImageType> images(number_of_images);
+  std::vector<LabelType> labels(number_of_images);
 
-  std::vector<ImageType> images;
-  std::vector<LabelType> labels;
-
-  for (int n = 0; n < number_of_images; ++n) {
-    ImageType image;
-    LabelType label;
-    unsigned char temp = 0;
-    size_t err = fread(&temp, sizeof(temp), 1, fp);
-    if (err < 1) {
-      std::cerr << "File read error!" << std::endl;
+  for (int i = 0; i < number_of_images; ++i) {
+    unsigned char label;
+    ifs.read((char*)&label, sizeof(label));
+    if (!ifs) {
+      std::cerr << "Read label error!" << std::endl;
       exit(1);
     }
-    label = OneHot<LabelType>((unsigned long)temp);
+    labels[i] = OneHot<LabelType>((unsigned long)label);
 
-    for (int i = 0; i < number_of_channels; ++i) {
-      for (int j = 0; j < number_of_cols; ++j) {
-        for (int k = 0; k < number_of_rows; ++k) {
-          err = fread(&temp, sizeof(temp), 1, fp);
-          if (err < 1) {
-            std::cerr << "File read error!" << std::endl;
-            exit(1);
-          }
-          image[i * image_2d + j * number_of_rows + k]
-            = temp / 255.0;
-        }
-      }
+    unsigned char image[image_size];
+    ifs.read((char*)image, sizeof(image));
+    if (!ifs) {
+      std::cerr << "Read image error!" << std::endl;
+      exit(1);
     }
-    labels.push_back(label);
-    images.push_back(image);
+    for (int j = 0; j < image_size; ++j) {
+      images[i][j] = image[j] / 255.0;
+    }
   }
-  fclose(fp);
-  std::cerr << "Success read Cifar10 " <<
-    (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
+  auto diff = std::chrono::steady_clock::now() - start;
+  std::cerr << "Success read Cifar10 "
+            << (st==TRAIN ? "Train" : "Test") << " data. ("
+            << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count()
+            << " msec)"<< std::endl;
   return {images, labels};
 }
