@@ -224,10 +224,6 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
     std::copy(std::istream_iterator<unsigned char>(ifs),
               std::istream_iterator<unsigned char>(),
               images[i].begin());
-    if (!ifs) {
-      std::cerr << "File read error!" << std::endl;
-      exit(1);
-    }
     std::for_each(images[i].begin(), images[i].end(),
                   [](typename ImageType::Type x) {x /= 255.0;});
   }
