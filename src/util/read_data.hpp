@@ -167,28 +167,30 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
   for (int i = 0; i < number_of_images; ++i) {
     char label;
 
-    ifs.read(&label, 1);
+    ifs.read(&label, sizeof(char));
     if (!ifs) {
-      std::cerr << "File read error!" << std::endl;
+      std::cerr << "Read label error!" << std::endl;
       exit(1);
     }
     if (c_class == COARSE)
       labels[i] = OneHot<LabelType>((unsigned long)label);
-    ifs.read(&label, 1);
+    ifs.read(&label, sizeof(char));
     if (!ifs) {
-      std::cerr << "File read error!" << std::endl;
+      std::cerr << "Read label error!" << std::endl;
       exit(1);
     }
     if (c_class == FINE)
       labels[i] = OneHot<LabelType>((unsigned long)label);
 
-    ifs.read(&images[i], image_size);
+    char image[image_size];
+    ifs.read(image, sizeof(image));
     if (!ifs) {
-      std::cerr << "File read error!" << std::endl;
+      std::cerr << "Read image error!" << std::endl;
       exit(1);
     }
-    std::for_each(images[i].begin(), images[i].end(),
-                  [](typename ImageType::Type x) {x /= 255.0;});
+    for (int j = 0; j < image_size; ++j) {
+      images[i][j] = image[j] / 255.0;
+    }
   }
   std::cerr << "Success read Cifar100 " <<
     (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
@@ -201,7 +203,7 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
   auto start = std::chrono::steady_clock::now();
   std::ifstream ifs((st == TRAIN ? kCifar10TrainDataFilePath :
                      kCifar10TestDataFilePath), std::ios::binary);
-  if (!ifs.is_open()) {
+  if (!ifs) {
     std::cerr << "File open error!!" << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -222,7 +224,7 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
     labels[i] = OneHot<LabelType>((unsigned long)label);
 
     char image[image_size];
-    ifs.read((char*)image, sizeof(image));
+    ifs.read(image, sizeof(image));
     if (!ifs) {
       std::cerr << "Read image error!" << std::endl;
       exit(1);
