@@ -156,7 +156,7 @@ void GeneticAlgorithm::run(std::string filepath) {
     /* 各遺伝子の評価*/
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread([&genom, &model, &test] {
+        threads.push_back(std::thread([&genom, model, &test] {
               GlobalParams::setParams(genom.getGenom());
               genom.executeEvaluation(model, test);
             }));
