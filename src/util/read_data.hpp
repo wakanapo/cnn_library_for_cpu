@@ -160,47 +160,28 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
 
   int number_of_images = (st == TRAIN) ? 50000 : 10000;
   int image_size = 32 * 32 * 3;
-<<<<<<< f49c590708b62703a74ba695516b4a2f1e20dfbd
 
   std::vector<ImageType> images(number_of_images);
   std::vector<LabelType> labels(number_of_images);
-=======
->>>>>>> Change to use fstream.
 
   for (int i = 0; i < number_of_images; ++i) {
     unsigned char label;
 
-<<<<<<< f49c590708b62703a74ba695516b4a2f1e20dfbd
     ifs.read((char*)&label, sizeof(char));
     if (!ifs) {
       std::cerr << "Read label error!" << std::endl;
-=======
-  for (int i = 0; i < number_of_images; ++i) {
-    char label;
-
-    ifs.read(&label, 1);
-    if (!ifs) {
-      std::cerr << "File read error!" << std::endl;
->>>>>>> Change to use fstream.
       exit(1);
     }
     if (c_class == COARSE)
       labels[i] = OneHot<LabelType>((unsigned long)label);
-<<<<<<< f49c590708b62703a74ba695516b4a2f1e20dfbd
     ifs.read((char*)&label, sizeof(char));
     if (!ifs) {
       std::cerr << "Read label error!" << std::endl;
-=======
-    ifs.read(&label, 1);
-    if (!ifs) {
-      std::cerr << "File read error!" << std::endl;
->>>>>>> Change to use fstream.
       exit(1);
     }
     if (c_class == FINE)
       labels[i] = OneHot<LabelType>((unsigned long)label);
 
-<<<<<<< f49c590708b62703a74ba695516b4a2f1e20dfbd
     unsigned char image[image_size];
     ifs.read((char*)image, sizeof(image));
     if (!ifs) {
@@ -210,15 +191,6 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
     for (int j = 0; j < image_size; ++j) {
       images[i][j] = image[j] / 255.0;
     }
-=======
-    ifs.read(&images[i], image_size);
-    if (!ifs) {
-      std::cerr << "File read error!" << std::endl;
-      exit(1);
-    }
-    std::for_each(images[i].begin(), images[i].end(),
-                  [](typename ImageType::Type x) {x /= 255.0;});
->>>>>>> Change to use fstream.
   }
   std::cerr << "Success read Cifar100 " <<
     (st==TRAIN ? "Train" : "Test") << " data." << std::endl;
