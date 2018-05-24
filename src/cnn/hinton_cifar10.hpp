@@ -20,6 +20,7 @@ public:
   unsigned long predict(const InputType& x) const;
   void save();
   void load();
+  void cast();
   Dataset<InputType, OutputType> readData(Status st);
 private:
   Convolution<5, 5, 3, 64, 2, 1, T> Conv1;
@@ -145,6 +146,14 @@ void HintonCifar10<T>::load() {
   Conv2.loadParams(&params, 1);
   Conv3.loadParams(&params, 2);
   Affine1.loadParams(&params, 3);
+}
+
+template<typename T>
+void HintonCifar10<T>::cast() {
+  Conv1.paramsCast();
+  Conv2.paramsCast();
+  Conv3.paramsCast();
+  Affine1.paramsCast();
 }
 
 template<typename T>

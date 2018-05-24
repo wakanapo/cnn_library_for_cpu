@@ -1,8 +1,11 @@
 #pragma once
 
 #include "cnn/cnn.hpp"
+#include "cnn/hinton_cifar10.hpp"
 #include "ga/first_genoms.hpp"
 #include "util/read_data.hpp"
+
+using Model = HintonCifar10<float>;
 
 class Genom {
 public:
@@ -12,7 +15,8 @@ public:
   std::vector<float> getGenom() const { return genom_list_; };
   float getEvaluation() const { return evaluation_; };
   void setGenom(std::vector<float> genom_list) { genom_list_ = genom_list; };
-  void executeEvaluation();
+  void executeEvaluation(Model model, const Dataset<typename Model::InputType,
+                         typename Model::OutputType>& test);
 private:
   std::vector<float> genom_list_;
   float evaluation_;

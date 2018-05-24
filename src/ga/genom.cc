@@ -9,7 +9,6 @@
 #include <thread>
 #include <vector>
 
-#include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
 #include "util/flags.hpp"
@@ -17,15 +16,11 @@
 #include "ga/set_gene.hpp"
 #include "protos/genom.pb.h"
 
-using Model = HintonCifar10<float>;
-Dataset<typename Model::InputType, typename Model::OutputType> test =
-  ReadCifar10Data<typename Model::InputType,
-                  typename Model::OutputType>(TEST);
 
-void Genom::executeEvaluation() {
-  Model model;
-  model.load();
-
+void Genom::executeEvaluation(Model model,
+                              const Dataset<typename Model::InputType,
+                              typename Model::OutputType>& test) {
+  model.cast();
   int cnt = 0;
   for (int i = 0; i < 4096; ++i) {
     unsigned long y = model.predict(test.images[i]);
@@ -151,15 +146,19 @@ void GeneticAlgorithm::save(std::string filename) {
 }
 
 void GeneticAlgorithm::run(std::string filepath) {
+  Model model;
+  Dataset<typename Model::InputType, typename Model::OutputType> test
+    = model.readData(TRAIN);
+  model.load();
   for (int i = 0; progressBar(i, max_generation_); ++i) {
     auto start = std::chrono::system_clock::now();
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread([&genom] {
+        threads.push_back(std::thread([&genom, &model, &test] {
               GlobalParams::setParams(genom.getGenom());
-              genom.executeEvaluation();
+              genom.executeEvaluation(model, test);
             }));
       }
     }
