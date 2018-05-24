@@ -214,10 +214,7 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
 
   for (int i = 0; i < number_of_images; ++i) {
     char label;
-    if (!ifs.read(&label, sizeof(char))) {
-      std::cerr << "File read error!" << std::endl;
-      exit(1);
-    }
+    ifs.read(&label, sizeof(label));
     labels[i] = OneHot<LabelType>((unsigned long)label);
 
     std::copy(std::istream_iterator<unsigned char>(ifs),
