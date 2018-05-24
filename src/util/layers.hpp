@@ -198,15 +198,19 @@ void Pooling<k_row, k_col, P, S, T>
 template<int input, int output, typename T>
 class Affine {
 public:
+  using WeightType = Tensor2D<output, input, T>;
+  using BiasType = Tensor1D<output, T>;
   Affine(const float low, const float high);
   void loadParams(CnnProto::Params* p, int idx);
   void saveParams(CnnProto::Params* p) const;
+  Params<WeightType, BiasType> getParams() const;
+  void setParams(Params<WeightType, BiasType> params);
   void forward(const Tensor1D<input, T>& x, Tensor1D<output, T>* ans) const;
   void backward(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
                 Tensor1D<input, T>* ans, const T& eps) ;
 private:
-  Tensor2D<output, input, T> w_;
-  Tensor1D<output, T> b_;
+  WeightType w_;
+  BiasType b_;
   void update_w(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
                 const T& eps);
   void update_b(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
@@ -236,6 +240,21 @@ void Affine<input, output, T>::saveParams(CnnProto::Params* p) const {
     w->mutable_w()->Add(Converter::ToFloat(w_[i]));
   for (int i = 0; i < b_.size(); ++i)
     b->mutable_b()->Add(Converter::ToFloat(b_[i]));
+}
+
+template<int input, int output, typename T>
+Params<typename Affine<input, output, T>::WeightType,
+       typename Affine<input, output, T>::BiasType>
+Affine<input, output, T>::getParams() const {
+  return {w_, b_};
+}
+
+template<int input, int output, typename T>
+void Affine<input, output, T>
+::setParams(Params<typename Affine<input, output, T>::WeightType,
+            typename Affine<input, output, T>::BiasType> params) {
+  w_ = params.weights;
+  b_ = params.biases;
 }
 
 template<int input, int output, typename T>
