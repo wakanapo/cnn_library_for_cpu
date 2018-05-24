@@ -38,6 +38,7 @@ experiment/.ipynb_checkpoints/
 data/arithmatic/
 data/cifar-100-binary
 data/cifar-10-binary
+data/
 
 *.pb.cc
 *.pb.h
