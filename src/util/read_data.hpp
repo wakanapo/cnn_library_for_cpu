@@ -207,7 +207,7 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
   }
 
   int number_of_images = (st == TRAIN) ? 50000 : 10000;
-  // int image_size = 32 * 32 * 3;
+  int image_size = 32 * 32 * 3;
 
   std::vector<ImageType> images(number_of_images);
   std::vector<LabelType> labels(number_of_images);
@@ -215,13 +215,21 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
   for (int i = 0; i < number_of_images; ++i) {
     char label;
     ifs.read(&label, sizeof(label));
+    if (!ifs) {
+      std::cerr << "Read label error!" << std::endl;
+      exit(1);
+    }
     labels[i] = OneHot<LabelType>((unsigned long)label);
 
-    std::copy(std::istream_iterator<unsigned char>(ifs),
-              std::istream_iterator<unsigned char>(),
-              images[i].begin());
-    std::for_each(images[i].begin(), images[i].end(),
-                  [](typename ImageType::Type x) {x /= 255.0;});
+    char image[image_size];
+    ifs.read((char*)image, sizeof(image));
+    if (!ifs) {
+      std::cerr << "Read image error!" << std::endl;
+      exit(1);
+    }
+    for (int j = 0; j < image_size; ++j) {
+      images[i][j] = image[j] / 255.0;
+    }
   }
   auto diff = std::chrono::steady_clock::now() - start;
   std::cerr << "Success read Cifar10 "
