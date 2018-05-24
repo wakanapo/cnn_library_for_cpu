@@ -161,20 +161,20 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
   int number_of_images = (st == TRAIN) ? 50000 : 10000;
   int image_size = 32 * 32 * 3;
 
-  std::vector<ImageType> images;
-  std::vector<LabelType> labels;
+  std::vector<ImageType> images(number_of_images);
+  std::vector<LabelType> labels(number_of_images);
 
   for (int i = 0; i < number_of_images; ++i) {
-    char label;
+    unsigned char label;
 
-    ifs.read(&label, sizeof(char));
+    ifs.read((char*)&label, sizeof(char));
     if (!ifs) {
       std::cerr << "Read label error!" << std::endl;
       exit(1);
     }
     if (c_class == COARSE)
       labels[i] = OneHot<LabelType>((unsigned long)label);
-    ifs.read(&label, sizeof(char));
+    ifs.read((char*)&label, sizeof(char));
     if (!ifs) {
       std::cerr << "Read label error!" << std::endl;
       exit(1);
@@ -182,8 +182,8 @@ Dataset<ImageType, LabelType> ReadCifar100Data(Status st, const CifarClass c_cla
     if (c_class == FINE)
       labels[i] = OneHot<LabelType>((unsigned long)label);
 
-    char image[image_size];
-    ifs.read(image, sizeof(image));
+    unsigned char image[image_size];
+    ifs.read((char*)image, sizeof(image));
     if (!ifs) {
       std::cerr << "Read image error!" << std::endl;
       exit(1);
@@ -215,16 +215,16 @@ Dataset<ImageType, LabelType> ReadCifar10Data(Status st) {
   std::vector<LabelType> labels(number_of_images);
 
   for (int i = 0; i < number_of_images; ++i) {
-    char label;
-    ifs.read(&label, sizeof(label));
+    unsigned char label;
+    ifs.read((char*)&label, sizeof(label));
     if (!ifs) {
       std::cerr << "Read label error!" << std::endl;
       exit(1);
     }
     labels[i] = OneHot<LabelType>((unsigned long)label);
 
-    char image[image_size];
-    ifs.read(image, sizeof(image));
+    unsigned char image[image_size];
+    ifs.read((char*)image, sizeof(image));
     if (!ifs) {
       std::cerr << "Read image error!" << std::endl;
       exit(1);
