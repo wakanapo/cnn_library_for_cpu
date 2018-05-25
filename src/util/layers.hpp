@@ -121,15 +121,15 @@ void Convolution<w_row, w_col, input, output, P, S, T>
   Shape x_dim = x.shape();
   for (int i = 0; i < w_dim[3]; ++i)
     for (int j = 0; j < w_dim[2]; ++j)
-      for (int k = P; k < w_dim[1]-P; ++k)
-        for (int l = P; l < w_dim[0]-P; ++l)
+      for (int k = 0; k < w_dim[1]-2*P; ++k)
+        for (int l = 0; l < w_dim[0]-2*P; ++l)
 
           for (int c = 0; c < d_dim[1]; ++c)
             for (int r = 0; r < d_dim[0]; ++r)
               delta_w[i*w_dim[0]*w_dim[1]*w_dim[2] +
-                      j*w_dim[0]*w_dim[1] + k*w_dim[0] + l]
+                      j*w_dim[0]*w_dim[1] + (k+P)*w_dim[0] + (l+P)]
                 = ADD(delta_w[i*w_dim[0]*w_dim[1]*w_dim[2] +
-                              j*w_dim[0]*w_dim[1] + k*w_dim[0] + l],
+                              j*w_dim[0]*w_dim[1] + (k+P)*w_dim[0] + (l+P)],
                       MUL(delta[i*d_dim[0]*d_dim[1] + c*d_dim[0] + r],
                           x[j*(x_dim[1]*x_dim[0]) + (k+c)*x_dim[0] + (l+r)]));
   
