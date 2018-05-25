@@ -65,8 +65,8 @@ void Convolution<w_row, w_col, input, output, P, S, T>
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
 void Convolution<w_row, w_col, input, output, P, S, T>
 ::paramsCast() {
-  std::for_each(w_.begin(), w_.end(), [](T x) {x = Box(x).toFloat();});
-  std::for_each(b_.begin(), b_.end(), [](T x) {x = Box(x).toFloat();});
+  std::for_each(w_.begin(), w_.end(), [](T& x) {x = Box(x).toFloat();});
+  std::for_each(b_.begin(), b_.end(), [](T& x) {x = Box(x).toFloat();});
 }
 
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
