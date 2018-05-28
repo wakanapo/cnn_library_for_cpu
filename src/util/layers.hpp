@@ -35,10 +35,10 @@ private:
   WeightType w_;
   BiasType b_;
   template<int x_row, int x_col>
-  void update_w(const Tensor3D<(x_row+2*P-w_row)/S+1, (x_col+2*P-w_col)/S+1, output, T>& delta,
+  void update_w(const Tensor3D<(x_row+2*P-w_row+S)/S, (x_col+2*P-w_col+S)/S, output, T>& delta,
                 const Tensor3D<x_row, x_col, input, T>& x, const T& eps);
   template<int x_row, int x_col>
-  void update_b(const Tensor3D<(x_row+2*P-w_row)/S+1, (x_col+2*P-w_col)/S+1, output, T>& delta,
+  void update_b(const Tensor3D<(x_row+2*P-w_row+S)/S, (x_col+2*P-w_col+S)/S, output, T>& delta,
                 const Tensor3D<x_row, x_col, input, T>& x, const T& eps);
 };
 
@@ -112,7 +112,7 @@ void Convolution<w_row, w_col, input, output, P, S, T>
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
 template<int x_row, int x_col>
 void Convolution<w_row, w_col, input, output, P, S, T>
-::update_w(const Tensor3D<(x_row+2*P-w_row)/S+1, (x_col+2*P-w_col)/S+1, output, T>& delta,
+::update_w(const Tensor3D<(x_row+2*P-w_row+S)/S, (x_col+2*P-w_col+S)/S, output, T>& delta,
            const Tensor3D<x_row, x_col, input, T>& x, const T& eps) {
   Tensor4D<w_row, w_col, input, output, T> delta_w;
   delta_w.init();
@@ -127,9 +127,9 @@ void Convolution<w_row, w_col, input, output, P, S, T>
           for (int c = 0; c < d_dim[1]; ++c)
             for (int r = 0; r < d_dim[0]; ++r)
               delta_w[i*w_dim[0]*w_dim[1]*w_dim[2] +
-                      j*w_dim[0]*w_dim[1] + k*w_dim[0] + l]
+                      j*w_dim[0]*w_dim[1] + (k+P)*w_dim[0] + (l+P)]
                 = ADD(delta_w[i*w_dim[0]*w_dim[1]*w_dim[2] +
-                              j*w_dim[0]*w_dim[1] + k*w_dim[0] + l],
+                              j*w_dim[0]*w_dim[1] + (k+P)*w_dim[0] + (l+P)],
                       MUL(delta[i*d_dim[0]*d_dim[1] + c*d_dim[0] + r],
                           x[j*(x_dim[1]*x_dim[0]) + (k+c)*x_dim[0] + (l+r)]));
   
@@ -140,7 +140,7 @@ void Convolution<w_row, w_col, input, output, P, S, T>
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
 template<int x_row, int x_col>
 void Convolution<w_row, w_col, input, output, P, S, T>
-::update_b(const Tensor3D<(x_row+2*P-w_row)/S+1, (x_col+2*P-w_col)/S+1, output, T>& delta,
+::update_b(const Tensor3D<(x_row+2*P-w_row+S)/S, (x_col+2*P-w_col+S)/S, output, T>& delta,
            const Tensor3D<x_row, x_col, input, T>& x, const T& eps) {
   Tensor1D<output, T> delta_b;
   delta_b.init();
