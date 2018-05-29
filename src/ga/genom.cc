@@ -36,41 +36,53 @@ void Genom::executeEvaluation() {
   evaluation_ = (float)cnt / (float)4096;
 }
 
-std::vector<Genom> GeneticAlgorithm::selectElite() const {
-  std::vector<Genom> elites = genoms_;
-  std::sort(elites.begin(), elites.end(),
-            [](const Genom& a, const Genom& b) {
-              return  a.getEvaluation() >  b.getEvaluation();
-            });
-  return std::vector<Genom>(elites.begin(), elites.begin() + elite_num_);
-}
-
-std::vector<Genom> GeneticAlgorithm::crossover(std::vector<Genom> parents) const {
+std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   /*
     二点交叉を行う関数
   */
-  std::vector<Genom> genoms;
-  int cross_one = rand() % genom_length_;
-  int cross_second = rand() % (genom_length_ - cross_one) + cross_one;
+  int center = rand() % (genom_length_ - 1);
+  int range = rand() % std::min(center, (genom_length_ - center));
 
-  for (int i = 0; i < parents.size() - 1; ++i) {
-    std::vector<float> genom_one = parents[i].getGenom();
-    std::vector<float> genom_two = parents[i+1].getGenom();
-    float offset = genom_one[cross_one-1] - genom_two[cross_one-1];
-    float ratio = (genom_one[cross_second] - genom_one[cross_one-1]) /
-      (genom_two[cross_second] - genom_two[cross_one-1]);
-    for (int j = cross_one; j < cross_second; ++j) {
-      std::swap(genom_one[j], genom_two[j]);
-      genom_one[j] = (genom_one[j] - offset) * ratio;
-      genom_two[j] = (genom_two[j] + offset) / ratio;
+  int spouse = rand() % (genom_num_ / 2);
+  std::vector<float> genom_one = parent.getGenom();
+  std::vector<float> genom_two = genoms_[spouse].getGenom();
+  auto inc_itr = std::lower_bound(genom_two.begin(), genom_two.end(),
+                                     genom_one[center]);
+  auto dic_itr = inc_itr;
+
+  for (int i = 0; i < range; ++i) {
+    if (inc_itr != genom_two.end()) {
+      std::swap(*inc_itr, genom_one[center+i]);
+      ++inc_itr;
     }
-    genoms.push_back(Genom(genom_one, 0));
-    genoms.push_back(Genom(genom_two, 0));
+    if (dic_itr != genom_two.begin()) {
+      std::swap(*dic_itr, genom_one[center-i]);
+      --dic_itr;
+    }
   }
-  return genoms;
+  return {{genom_one, 0}, {genom_two, 0}};
 }
 
-void GeneticAlgorithm::nextGenerationGeneCreate(std::vector<Genom>& progenies) {
+Genom GeneticAlgorithm::mutation(const Genom& parent) const {
+  /*
+    突然変異関数
+  */
+  std::random_device seed;
+  std::mt19937 mt(seed());
+  std::uniform_real_distribution<> rand(0.0, 1.0);
+  std::vector<float> genes = parent.getGenom();
+  
+  for (int i = 0; i < genom_length_; ++i) {
+    float left = (i == 0) ? genes[i] - 0.05 : genes[i-1];
+    float right = (i == genom_length_ - 1) ? genes[i] + 0.05 : genes[i+1];
+    std::uniform_real_distribution<> new_pos(left, right);
+    genes[i] = new_pos(mt);
+  }
+  return {genes, 0};
+}
+
+
+void GeneticAlgorithm::nextGenerationGeneCreate() {
   /*
     世代交代処理を行う関数
   */
@@ -78,39 +90,38 @@ void GeneticAlgorithm::nextGenerationGeneCreate(std::vector<Genom>& progenies) {
             [](const Genom& a, const Genom& b) {
               return  a.getEvaluation() <  b.getEvaluation();
             });
-  for (int i = 0; i < progenies.size(); ++i) {
-    genoms_[i] = progenies[i];
+  
+  std::random_device seed;
+  std::mt19937 mt(seed());
+  std::uniform_real_distribution<> rand(0.0, 1.0);
+  std::vector<Genom> new_genoms;
+  new_genoms.reserve(genom_num_);
+  
+  for (auto& genom : genoms_) {
+    if (new_genoms.size() == genom_num_)
+      break;
+    auto r = rand(mt);
+    /* 突然変異 */
+    if (r < mutation_rate_) {
+      new_genoms.push_back(mutation(genom));
+      continue;
+    }
+    r -= mutation_rate_;
+
+    /* 交叉 */
+    if (new_genoms.size() <= genom_num_ - 2 && r < cross_rate_) {
+      auto genoms = crossover(genom);
+      std::copy(genoms.begin(), genoms.end(), std::back_inserter(new_genoms));
+      continue;
+    }
+
+    /* 選択 */
+    new_genoms.push_back(genom);
   }
+
+  genoms_ = std::move(new_genoms);
 }
 
-void GeneticAlgorithm::mutation() {
-  /*
-    突然変異関数
-  */
-  for (auto& genom: genoms_) {
-    std::random_device seed;
-    std::mt19937 mt(seed());
-    std::uniform_real_distribution<> rand(0.0, 1.0);
-    if (individual_mutation_ < rand(mt))
-      continue;
-    std::vector<float> new_genom;
-    float offset = 0.0;
-    for (int i = 0; i < genom_length_; ++i) {
-      int gene = genom.getGenom()[i];
-      if (genom_mutation_ > rand(mt) / 100.0) {
-        float random = (rand(mt) - 0.5) * 2;
-        float diff;
-        if (random > 0)
-          diff = (i == genom.getGenom().size() -1) ? 0.1 : genom.getGenom()[i+1] - gene;
-        else
-          diff = (i == 0) ? 0.1 : gene - genom.getGenom()[i-1];
-        offset = random * diff;
-      }
-      new_genom.push_back(gene + offset);
-    }
-    genom.setGenom(new_genom);
-  }
-}
 
 void GeneticAlgorithm::print(int i) {
   float min = 1.0;
@@ -170,14 +181,8 @@ void GeneticAlgorithm::run(std::string filepath) {
     print(i);
     save(filepath+std::to_string(i));
     
-    /* エリートの選出 */
-    std::vector<Genom> elites = selectElite();
-    /* エリート遺伝子を交叉させ、子孫を作る */
-    std::vector<Genom> progenies = crossover(elites);
     /* 次世代集団の作成 */
-    nextGenerationGeneCreate(progenies);
-    /* 突然変異 */
-    mutation();
+    nextGenerationGeneCreate();
     auto diff = std::chrono::system_clock::now() - start;
     std::cout << "Time: "
               << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
@@ -187,7 +192,7 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(16, 100, 20, 0.05, 0.05, 50);
+  GeneticAlgorithm ga(16, 100, 0.05, 0.05, 50);
   if (argc != 3) {
     std::cout << "Usage: ./bin/ga test filepath" << std::endl;
     return 1;
