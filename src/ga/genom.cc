@@ -47,17 +47,20 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   auto inc_itr = std::lower_bound(genom_two.begin(), genom_two.end(),
                                      genom_one[center]);
   auto dic_itr = inc_itr;
+  dic_itr--;
 
   for (int i = 0; i < range; ++i) {
     if (inc_itr != genom_two.end()) {
       std::swap(*inc_itr, genom_one[center+i]);
       ++inc_itr;
     }
-    if (dic_itr != genom_two.begin()) {
+    if (i != 0 && dic_itr != genom_two.begin()) {
       std::swap(*dic_itr, genom_one[center-i]);
       --dic_itr;
     }
   }
+  std::sort(genom_one.begin(), genom_one.end());
+  std::sort(genom_two.begin(), genom_two.end());
   return {{genom_one, 0}, {genom_two, 0}};
 }
 
