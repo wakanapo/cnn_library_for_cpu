@@ -19,7 +19,7 @@
 #include "protos/cnn_params.pb.h"
 #include "protos/arithmatic.pb.h"
 
-#define CPU_NUM 20
+#define CPU_NUM 32
 
 template <typename ModelType>
 class CNN {
@@ -38,12 +38,12 @@ void CNN<ModelType>::training() {
   Dataset<InputType, OutputType> test = model.readData(TEST);
 
   Type eps = (Type)0.01;
-  int epoch = 5;
-  int image_num = 10000;
+  int epoch = 10;
+  int image_num = 50000;
 
   for (int k = 0; k < epoch; ++k) {
     std::cout << "--------epoch " << k << "--------" << std::endl;
-    for (int i = image_num*k; progressBar(i-image_num*k, image_num); ++i) {
+    for (int i = 0; progressBar(i, image_num); ++i) {
       if (Options::IsSaveArithmetic()) {
         std::stringstream sFile;
         sFile << Options::GetArithmaticOutput();
