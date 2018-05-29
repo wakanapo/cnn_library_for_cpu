@@ -48,4 +48,4 @@ def main(bit, genom_num):
         f.write("};\n")
 
 if __name__ =="__main__":
-    main(3, 10)
+    main(4, 10)

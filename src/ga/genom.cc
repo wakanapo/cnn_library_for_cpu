@@ -194,7 +194,7 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(16, 100, 0.05, 0.05, 50);
+  GeneticAlgorithm ga(16, 10, 0.1, 0.6, 5);
   if (argc != 3) {
     std::cout << "Usage: ./bin/ga test filepath" << std::endl;
     return 1;
