@@ -12,7 +12,9 @@ public:
   std::vector<float> getGenom() const { return genom_list_; };
   float getEvaluation() const { return evaluation_; };
   void setGenom(std::vector<float> genom_list) { genom_list_ = genom_list; };
-  void executeEvaluation();
+  template<typename Model>
+  void executeEvaluation(Model model, Dataset<typename Model::InputType,
+                         typename Model::OutputType> test);
 private:
   std::vector<float> genom_list_;
   float evaluation_;

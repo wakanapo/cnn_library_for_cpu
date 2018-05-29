@@ -18,18 +18,16 @@
 #include "protos/genom.pb.h"
 
 using Model = HintonCifar10<float>;
-Dataset<typename Model::InputType, typename Model::OutputType> test =
-  ReadCifar10Data<typename Model::InputType,
-                  typename Model::OutputType>(TEST);
 
-void Genom::executeEvaluation() {
-  Model model;
-  model.load();
+template<typename Model>
+void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
+                              typename Model::OutputType> test) {
+  model.cast();
 
   int cnt = 0;
   for (int i = 0; i < 4096; ++i) {
     unsigned long y = model.predict(test.images[i]);
-    if (OneHot<Model::OutputType>(y) == test.labels[i])
+    if (OneHot<typename Model::OutputType>(y) == test.labels[i])
       ++cnt;
   }
 
@@ -162,15 +160,19 @@ void GeneticAlgorithm::save(std::string filename) {
 }
 
 void GeneticAlgorithm::run(std::string filepath) {
+  Model model;
+  auto test = model.readData(TEST);
+  model.load();
+  
   for (int i = 0; progressBar(i, max_generation_); ++i) {
     auto start = std::chrono::system_clock::now();
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread([&genom] {
+        threads.push_back(std::thread([&genom, &test, model] {
               GlobalParams::setParams(genom.getGenom());
-              genom.executeEvaluation();
+              genom.executeEvaluation(model, test);
             }));
       }
     }
