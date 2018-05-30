@@ -11,7 +11,7 @@ def make_normal(n):
         ranges.append(b)
     ranges = np.asarray(ranges)
     ranges /= abs(max(ranges, key=abs))
-    return np.sort(ranges) * random.uniform(0.1, 1.0)
+    return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def make_linear(n):
     return np.linspace(-1.0, 1.0, 2**n) * random.uniform(0.1, 1.0)
@@ -21,12 +21,12 @@ def make_log(n):
                               np.logspace(-1, 2.0, num=2**n)))
      ranges = ranges[0::2]
      ranges /= abs(max(ranges, key=abs))
-     return np.sort(ranges) * random.uniform(0.1, 1.0)
+     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def make_random(n):
     ranges = np.concatenate((np.random.rand(2**(n-1)), np.random.rand(2**(n-1)) * -1))
     ranges /= abs(max(ranges, key=abs))
-    return np.sort(ranges) * random.uniform(0.1, 1.0)
+    return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def main(bit, genom_num):
     genoms = [make_normal(bit), make_linear(bit), make_log(bit)]
