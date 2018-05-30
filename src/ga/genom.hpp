@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cnn/cnn.hpp"
-#include "ga/first_genoms.hpp"
 #include "util/read_data.hpp"
 
 class Genom {

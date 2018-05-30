@@ -1,7 +1,11 @@
-import sys
 from scipy.stats import norm
 import numpy as np
 import random
+import os
+pwd = os.getcwd()
+import sys
+sys.path.append(pwd+'/src/protos')
+import genom_pb2
 
 def make_normal(n):
     ranges = []
@@ -29,23 +33,17 @@ def make_random(n):
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def main(bit, genom_num):
-    genoms = [make_normal(bit), make_linear(bit), make_log(bit)]
+    genes = [make_normal(bit), make_linear(bit), make_log(bit)]
     for _ in range(genom_num-3):
-        genoms.append(make_random(bit))
+        genes.append(make_random(bit))
 
-    with open('src/ga/first_genoms.hpp', 'w') as f:
-        f.write("#pragma once\n")
-        f.write("#include <vector>\n\n")
-        f.write("std::vector<std::vector<float>> range = {{")
-        for i, genom in enumerate(genoms):
-            if i != 0:
-                f.write(", {")
-            for j, v in enumerate(genom):
-                if j != 0:
-                    f.write(", ")
-                f.write(str(v))
-            f.write("}")
-        f.write("};\n")
+    message = genom_pb2.Genoms();
+    for gene in genes:
+        genoms = message.genoms.add()
+        genoms.gene.extend(gene)
+
+    with open(pwd+"/data/first_genom.pb", "wb") as f:
+        f.write(message.SerializeToString())
 
 if __name__ =="__main__":
     main(4, 3)
