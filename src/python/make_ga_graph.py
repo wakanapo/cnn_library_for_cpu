@@ -1,7 +1,7 @@
 import os
-home = os.environ['HOME']
+pwd = os.getcwd()
 import sys
-sys.path.append('src/protos')
+sys.path.append(pwd+'/src/protos')
 import genom_pb2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ def main(filename, n):
     colors = np.random.rand(100, 3, 1)
     for j in range(n):
         try:
-            with open("data/{0}/{0}{1}.pb".format(filename, j), "rb") as f:
+            with open(pwd+"/data/{0}/{0}{1}.pb".format(filename, j), "rb") as f:
                 genoms.ParseFromString(f.read())
         except IOError:
             print ("Could not open file.")
@@ -26,7 +26,7 @@ def main(filename, n):
         plt.title("genoms")
         plt.ylabel("accuracy")
         plt.xlabel("range")
-        plt.savefig("data/{0}/evaluation_{1}.png".format(filename, j))
+        plt.savefig(pwd+"/data/{0}/evaluation_{1}.png".format(filename, j))
         plt.close()
         
         for i in range(len(genoms.genoms)):
@@ -39,7 +39,7 @@ def main(filename, n):
         plt.title("genoms")
         plt.ylabel("genoms #")
         plt.xlabel("range")
-        plt.savefig("data/{0}/genoms_{1}.png".format(filename, j))
+        plt.savefig(pwd+"/data/{0}/genoms_{1}.png".format(filename, j))
         plt.close()
 
 if __name__=="__main__":
