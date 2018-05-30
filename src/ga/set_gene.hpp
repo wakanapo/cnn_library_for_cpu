@@ -4,7 +4,7 @@
 
 
 class GlobalParams {
- public:  
+ public:
   const std::vector<float>& partition() const {
     return partition_;
   }

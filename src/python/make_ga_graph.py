@@ -1,22 +1,21 @@
 import os
-home = os.environ['HOME']
+pwd = os.getcwd()
 import sys
-sys.path.append(home+'/utokyo-kudohlab/cnn_cpp/src/protos')
+sys.path.append(pwd+'/src/protos')
 import genom_pb2
 import numpy as np
 import matplotlib.pyplot as plt
 
 def main(filename, n):
     genoms = genom_pb2.Genoms()
-    colors = np.random.rand(100, 3, 1)
+    colors = np.random.rand(100, 3)
     for j in range(n):
         try:
-            with open(home+"/utokyo-kudohlab/cnn_cpp/data/{0}{1}.pb"
-                      .format(filename, j),
-                      "rb") as f:
+            with open(pwd+"/data/{0}/{0}{1}.pb".format(filename, j), "rb") as f:
                 genoms.ParseFromString(f.read())
         except IOError:
             print ("Could not open file.")
+            continue
             
         for i in range(len(genoms.genoms)):
             plt.scatter(genoms.genoms[i].gene,
@@ -28,13 +27,25 @@ def main(filename, n):
         plt.title("genoms")
         plt.ylabel("accuracy")
         plt.xlabel("range")
-        plt.savefig(home+"/utokyo-kudohlab/cnn_cpp/data/evaluation_{0}{1}.png"
-                    .format(filename, j))
+        plt.savefig(pwd+"/data/{0}/evaluation_{1}.png".format(filename, j))
+        plt.close()
+        
+        for i in range(len(genoms.genoms)):
+            plt.scatter(genoms.genoms[i].gene,
+                        np.full_like(genoms.genoms[i].gene, i),
+                        c=colors[i])
+
+        plt.xlim(-1.0, 1.0)
+        plt.title("genoms")
+        plt.ylabel("genoms #")
+        plt.xlabel("range")
+        plt.savefig(pwd+"/data/{0}/genoms_{1}.png".format(filename, j))
         plt.close()
 
 if __name__=="__main__":
     argv = sys.argv
-    if len(argv) != 2:
-        print("Usage: Python {} filename".format(argv[0]))
+    if len(argv) != 3:
+        print("Usage: Python {} filename #genom".format(argv[0]))
         quit()
-    main(argv[1], 50)
+    main(argv[1], int(argv[2]))
+
