@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 def main(filename, n):
     genoms = genom_pb2.Genoms()
-    colors = np.random.rand(100, 3, 1)
+    colors = np.random.rand(100, 3)
     for j in range(n):
         try:
             with open(pwd+"/data/{0}/{0}{1}.pb".format(filename, j), "rb") as f:
