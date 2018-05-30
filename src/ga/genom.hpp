@@ -22,15 +22,7 @@ private:
 
 class GeneticAlgorithm {
 public:
-  GeneticAlgorithm(int genom_length, int genom_num, float cross_rate,
-                   float mutation_rate, int max_generation)
-    : genom_length_(genom_length), genom_num_(genom_num),
-      cross_rate_(cross_rate), mutation_rate_(mutation_rate),
-      max_generation_(max_generation) {
-    for (auto genom: range) {
-      genoms_.push_back(Genom(genom, 0));
-    }
-  };
+  static GeneticAlgorithm setup();
   std::vector<Genom> crossover(const Genom& parent) const;
   Genom mutation(const Genom& parent) const;
   void nextGenerationGeneCreate();
@@ -38,10 +30,16 @@ public:
   void save(std::string filepath);
   void print(int i);
 private:
+  GeneticAlgorithm(int genom_length, int genom_num, float cross_rate,
+                   float mutation_rate, int max_generation)
+    : genom_length_(genom_length), genom_num_(genom_num),
+      cross_rate_(cross_rate), mutation_rate_(mutation_rate),
+      max_generation_(max_generation) {};
   int genom_length_;
   int genom_num_;
   float cross_rate_;
   float mutation_rate_;
   int max_generation_;
+  void moveGenoms(std::vector<Genom>&& genom);
   std::vector<Genom> genoms_;
 };

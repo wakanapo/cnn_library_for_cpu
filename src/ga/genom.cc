@@ -35,6 +35,34 @@ void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
   evaluation_ = (float)cnt / (float)4096;
 }
 
+GeneticAlgorithm GeneticAlgorithm::setup() {
+  Gene::Genoms genes;
+  std::fstream input(Options::GetFirstGenomFile(),
+                     std::ios::in | std::ios::binary);
+  if (!genes.ParseFromIstream(&input)) {
+    std::cerr << "Cannot load first genoms." << std::endl;
+    exit(1);
+  }
+
+  GeneticAlgorithm ga(genes.genoms(0).gene_size(), genes.genoms_size(),
+                      Options::GetCrossRate(),Options::GetMutationRate(),
+                      Options::GetMaxGeneration());
+  std::vector<Genom> genoms;
+  std::vector<float> gene;
+  for (int i = 0; i < genes.genoms_size(); ++i) {
+    for (int j = 0; j < genes.genoms(i).gene_size(); ++j) {
+      gene.push_back(genes.genoms(i).gene(j));
+    }
+    genoms.push_back({gene, 0});
+  }
+  ga.moveGenoms(std::move(genoms));
+  return ga;
+}
+
+void GeneticAlgorithm::moveGenoms(std::vector<Genom>&& genoms) {
+  genoms_ = std::move(genoms);
+}
+
 std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   /*
     二点交叉を行う関数
@@ -147,7 +175,6 @@ void GeneticAlgorithm::print(int i) {
 }
 
 void GeneticAlgorithm::save(std::string filename) {
-  std::string home = getenv("HOME");
   Gene::Genoms gs;
   for (auto genom : genoms_) {
     Gene::Gene* g = gs.add_genoms();
@@ -194,11 +221,11 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(16, 3, 0.1, 0.6, 1);
   if (argc != 3) {
-    std::cout << "Usage: ./bin/ga test filepath" << std::endl;
+    std::cout << "Usage: ./bin/ga first_genom_file  input_file" << std::endl;
     return 1;
   }
   Options::ParseCommandLine(argc, argv);
+  GeneticAlgorithm ga = GeneticAlgorithm::setup();
   ga.run("hinton_ga");
 }

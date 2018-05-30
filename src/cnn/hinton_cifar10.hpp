@@ -141,6 +141,7 @@ void HintonCifar10<T>::load() {
                      std::ios::in | std::ios::binary);
   if (!params.ParseFromIstream(&input)) {
     std::cerr << "Failed to load params." << std::endl;
+    exit(1);
   }
   Conv1.loadParams(&params, 0);
   Conv2.loadParams(&params, 1);
