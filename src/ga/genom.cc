@@ -165,6 +165,8 @@ void GeneticAlgorithm::save(std::string filename) {
 
 void GeneticAlgorithm::run(std::string filepath) {
   Timer timer;
+  timer.start();
+  
   Model model;
   auto test = model.readData(TEST);
   model.load();

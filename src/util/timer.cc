@@ -8,7 +8,7 @@ void Timer::start() {
 
 void Timer::show(TimeUnit tu, std::string str) {
   auto diff = std::chrono::steady_clock::now() - start_;
-  std::cout << str << " time: ";
+  std::cout << str << " Time: ";
   if (tu == MILLISEC)
     std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count()
               << " millisec.";
