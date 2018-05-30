@@ -9,7 +9,6 @@
 #include <thread>
 #include <vector>
 
-#include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
 #include "util/flags.hpp"
@@ -17,15 +16,11 @@
 #include "ga/set_gene.hpp"
 #include "protos/genom.pb.h"
 
-using Model = HintonCifar10<float>;
-Dataset<typename Model::InputType, typename Model::OutputType> test =
-  ReadCifar10Data<typename Model::InputType,
-                  typename Model::OutputType>(TEST);
 
-void Genom::executeEvaluation() {
-  Model model;
-  model.load();
-
+void Genom::executeEvaluation(Model model,
+                              const Dataset<typename Model::InputType,
+                              typename Model::OutputType>& test) {
+  model.cast();
   int cnt = 0;
   for (int i = 0; i < 4096; ++i) {
     unsigned long y = model.predict(test.images[i]);
@@ -125,12 +120,11 @@ void GeneticAlgorithm::print(int i) {
     if (evaluation > max)
       max = evaluation;
   }
-
+  std::cout << "-------------" << std::endl;
   std::cout << "世代: " << i << std::endl;
   std::cout << "Min: " << min << std::endl;
   std::cout << "Max: " << max << std::endl;
   std::cout << "Ave: " << sum / genom_num_ << std::endl;
-  std::cout << "-------------" << std::endl;
 }
 
 void GeneticAlgorithm::save(std::string filename) {
@@ -151,15 +145,19 @@ void GeneticAlgorithm::save(std::string filename) {
 }
 
 void GeneticAlgorithm::run(std::string filepath) {
+  Model model;
+  Dataset<typename Model::InputType, typename Model::OutputType> test
+    = model.readData(TEST);
+  model.load();
   for (int i = 0; progressBar(i, max_generation_); ++i) {
     auto start = std::chrono::system_clock::now();
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread([&genom] {
+        threads.push_back(std::thread([&genom, &test, model] {
               GlobalParams::setParams(genom.getGenom());
-              genom.executeEvaluation();
+              genom.executeEvaluation(model, test);
             }));
       }
     }
@@ -169,7 +167,6 @@ void GeneticAlgorithm::run(std::string filepath) {
     
     print(i);
     save(filepath+std::to_string(i));
-    
     /* エリートの選出 */
     std::vector<Genom> elites = selectElite();
     /* エリート遺伝子を交叉させ、子孫を作る */
@@ -187,7 +184,7 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(16, 100, 20, 0.05, 0.05, 50);
+  GeneticAlgorithm ga(8, 10, 2, 0.05, 0.05, 10);
   if (argc != 3) {
     std::cout << "Usage: ./bin/ga test filepath" << std::endl;
     return 1;

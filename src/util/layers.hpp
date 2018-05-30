@@ -6,12 +6,6 @@
 #include "util/tensor.hpp"
 #include "protos/cnn_params.pb.h"
 
-template<typename WEIGHT_T, typename BIAS_T>
-struct Params {
-  WEIGHT_T weights;
-  BIAS_T biases;
-};
-
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
 class Convolution {
 public:
@@ -20,8 +14,7 @@ public:
   Convolution(const float low, const float high);
   void loadParams(CnnProto::Params* p, int idx);
   void saveParams(CnnProto::Params* p) const;
-  Params<WeightType, BiasType> getParams() const;
-  void setParams(Params<WeightType, BiasType> params);
+  void paramsCast();
   template<int x_row, int x_col, int a_row, int a_col>
   void forward(const Tensor3D<x_row, x_col, input, T>& x,
                Tensor3D<a_row, a_col, output, T>* ans) const;
@@ -70,18 +63,12 @@ void Convolution<w_row, w_col, input, output, P, S, T>
 }
 
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
-Params<typename Convolution<w_row, w_col, input, output, P, S, T>::WeightType,
-       typename Convolution<w_row, w_col, input, output, P, S, T>::BiasType>
-Convolution<w_row, w_col, input, output, P, S, T>::getParams() const {
-  return {w_, b_};
-}
-
-template<int w_row, int w_col, int input, int output, int P, int S, typename T>
 void Convolution<w_row, w_col, input, output, P, S, T>
-::setParams(Params<typename Convolution<w_row, w_col, input, output, P, S, T>::WeightType,
-typename Convolution<w_row, w_col, input, output, P, S, T>::BiasType> params) {
-  w_ = params.weights;
-  b_ = params.biases;
+::paramsCast() {
+  for (int i = 0; i < w_.size(); ++i)
+    w_[i] = Box(w_[i]).toFloat();
+  for (int i = 0; i < b_.size(); ++i)
+    b_[i] = Box(b_[i]).toFloat();
 }
 
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
@@ -198,15 +185,18 @@ void Pooling<k_row, k_col, P, S, T>
 template<int input, int output, typename T>
 class Affine {
 public:
+  using WeightType = Tensor2D<output, input, T>;
+  using BiasType = Tensor1D<output, T>;
   Affine(const float low, const float high);
   void loadParams(CnnProto::Params* p, int idx);
   void saveParams(CnnProto::Params* p) const;
+  void paramsCast();
   void forward(const Tensor1D<input, T>& x, Tensor1D<output, T>* ans) const;
   void backward(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
                 Tensor1D<input, T>* ans, const T& eps) ;
 private:
-  Tensor2D<output, input, T> w_;
-  Tensor1D<output, T> b_;
+  WeightType w_;
+  BiasType b_;
   void update_w(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
                 const T& eps);
   void update_b(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
@@ -236,6 +226,14 @@ void Affine<input, output, T>::saveParams(CnnProto::Params* p) const {
     w->mutable_w()->Add(Converter::ToFloat(w_[i]));
   for (int i = 0; i < b_.size(); ++i)
     b->mutable_b()->Add(Converter::ToFloat(b_[i]));
+}
+
+template<int input, int output, typename T>
+void Affine<input, output, T>::paramsCast() {
+  for (int i = 0; i < w_.size(); ++i)
+    w_[i] = Box(w_[i]).toFloat();
+  for (int i = 0; i < b_.size(); ++i)
+    b_[i] = Box(b_[i]).toFloat();
 }
 
 template<int input, int output, typename T>
