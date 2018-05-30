@@ -127,11 +127,12 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
   int elite = std::max(1, (int)(genom_num_ * 0.1));
-  std::copy(genoms_.begin(), genoms_.begin()+elite, new_genoms);
   
   for (auto& genom : genoms_) {
     if (new_genoms.size() == genom_num_)
       break;
+    if (new_genoms.size() < elite)
+      new_genoms.push_back(genom);
     auto r = rand(mt) * genom.getEvaluation() * 2;
     if (r < mutation_rate_ + cross_rate_)
       continue;
