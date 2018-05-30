@@ -131,16 +131,21 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   for (auto& genom : genoms_) {
     if (new_genoms.size() == genom_num_)
       break;
+
+    /* エリート選択 */
     if (new_genoms.size() < elite)
       new_genoms.push_back(genom);
+
     auto r = rand(mt) * genom.getEvaluation() * 2;
     if (r < mutation_rate_ + cross_rate_)
       continue;
+
     /* 突然変異 */
     if (r < mutation_rate_) {
       new_genoms.push_back(mutation(genom));
       continue;
     }
+
     /* 交叉 */
     if (new_genoms.size() <= genom_num_ - 2) {
       auto genoms = crossover(genom);
