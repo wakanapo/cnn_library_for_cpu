@@ -14,6 +14,7 @@
 #include "util/box_quant.hpp"
 #include "util/flags.hpp"
 #include "util/read_data.hpp"
+#include "util/timer.hpp"
 #include "ga/set_gene.hpp"
 #include "protos/genom.pb.h"
 
@@ -163,12 +164,13 @@ void GeneticAlgorithm::save(std::string filename) {
 }
 
 void GeneticAlgorithm::run(std::string filepath) {
+  Timer timer;
   Model model;
   auto test = model.readData(TEST);
   model.load();
-  
-  for (int i = 0; progressBar(i, max_generation_); ++i) {
-    auto start = std::chrono::system_clock::now();
+  timer.show(MILLISEC, "Prepare GA.")
+  for (int i = 0; i < max_generation_; ++i) {
+    timer.start();
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
     for (auto& genom: genoms_) {
@@ -188,20 +190,21 @@ void GeneticAlgorithm::run(std::string filepath) {
     
     /* 次世代集団の作成 */
     nextGenerationGeneCreate();
-    auto diff = std::chrono::system_clock::now() - start;
-    std::cout << "Time: "
-              << std::chrono::duration_cast<std::chrono::seconds>(diff).count()
-              << " sec."
-              << std::endl;
+    timer.show(SEC, "");
   }
 }
 
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(16, 10, 0.1, 0.6, 5);
+  Timer timer;
+  timer.start();
+  GeneticAlgorithm ga(16, 3, 0.1, 0.6, 1);
+  timer.show(MILLISEC, "GA Constractor.");
   if (argc != 3) {
     std::cout << "Usage: ./bin/ga test filepath" << std::endl;
     return 1;
   }
+  timer.start();
   Options::ParseCommandLine(argc, argv);
+  timer.show(MILLISEC, "Flag Parser.")
   ga.run("hinton_ga");
 }

@@ -17,8 +17,8 @@ def make_linear(n):
     return np.linspace(-1.0, 1.0, 2**n) * random.uniform(0.1, 1.0)
 
 def make_log(n):
-     ranges = np.concatenate((-1 * np.logspace(-5, 2.0, num=2**n),
-                              np.logspace(-5, 2.0, num=2**n)))
+     ranges = np.concatenate((-1 * np.logspace(-1, 2.0, num=2**n),
+                              np.logspace(-1, 2.0, num=2**n)))
      ranges = ranges[0::2]
      ranges /= abs(max(ranges, key=abs))
      return np.sort(ranges) * random.uniform(0.1, 1.0)
