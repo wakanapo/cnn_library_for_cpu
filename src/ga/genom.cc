@@ -168,7 +168,7 @@ void GeneticAlgorithm::run(std::string filepath) {
   Model model;
   auto test = model.readData(TEST);
   model.load();
-  timer.show(MILLISEC, "Prepare GA.")
+  timer.show(MILLISEC, "Prepare GA.");
   for (int i = 0; i < max_generation_; ++i) {
     timer.start();
     std::vector<std::thread> threads;
@@ -205,6 +205,6 @@ int main(int argc, char* argv[]) {
   }
   timer.start();
   Options::ParseCommandLine(argc, argv);
-  timer.show(MILLISEC, "Flag Parser.")
+  timer.show(MILLISEC, "Flag Parser.");
   ga.run("hinton_ga");
 }
