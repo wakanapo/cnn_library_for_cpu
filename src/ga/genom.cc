@@ -70,7 +70,7 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   int center = rand() % (genom_length_ - 1);
   int range = rand() % std::min(center, (genom_length_ - center));
 
-  int spouse = rand() % (genom_num_ / 2);
+  int spouse = rand() % genom_num_;
   std::vector<float> genom_one = parent.getGenom();
   std::vector<float> genom_two = genoms_[spouse].getGenom();
   auto inc_itr = std::lower_bound(genom_two.begin(), genom_two.end(),
@@ -126,27 +126,26 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   std::uniform_real_distribution<> rand(0.0, 1.0);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
+  int elite = std::max(1, (int)(genom_num_ * 0.1));
+  std::copy(genoms_.begin(), genoms_.begin()+elite, new_genoms);
   
   for (auto& genom : genoms_) {
     if (new_genoms.size() == genom_num_)
       break;
-    auto r = rand(mt);
+    auto r = rand(mt) * genom.getEvaluation() * 2;
+    if (r < mutation_rate_ + cross_rate_)
+      continue;
     /* 突然変異 */
     if (r < mutation_rate_) {
       new_genoms.push_back(mutation(genom));
       continue;
     }
-    r -= mutation_rate_;
-
     /* 交叉 */
-    if (new_genoms.size() <= genom_num_ - 2 && r < cross_rate_) {
+    if (new_genoms.size() <= genom_num_ - 2) {
       auto genoms = crossover(genom);
       std::copy(genoms.begin(), genoms.end(), std::back_inserter(new_genoms));
       continue;
     }
-
-    /* 選択 */
-    new_genoms.push_back(genom);
   }
 
   genoms_ = std::move(new_genoms);
