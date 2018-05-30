@@ -44,8 +44,8 @@ def main(filename, n):
 
 if __name__=="__main__":
     argv = sys.argv
-    if len(argv) != 2:
-        print("Usage: Python {} filename".format(argv[0]))
+    if len(argv) != 3:
+        print("Usage: Python {} filename #genom".format(argv[0]))
         quit()
     main(argv[1], argv[2])
 
