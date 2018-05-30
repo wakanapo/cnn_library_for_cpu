@@ -47,4 +47,5 @@ if __name__=="__main__":
     if len(argv) != 2:
         print("Usage: Python {} filename".format(argv[0]))
         quit()
-    main(argv[1], 50)
+    main(argv[1], argv[2])
+
