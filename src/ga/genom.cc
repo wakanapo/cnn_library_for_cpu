@@ -165,12 +165,9 @@ void GeneticAlgorithm::save(std::string filename) {
 
 void GeneticAlgorithm::run(std::string filepath) {
   Timer timer;
-  timer.start();
-  
   Model model;
   auto test = model.readData(TEST);
   model.load();
-  timer.show(MILLISEC, "Prepare GA.");
   for (int i = 0; i < max_generation_; ++i) {
     timer.start();
     std::vector<std::thread> threads;
@@ -186,10 +183,10 @@ void GeneticAlgorithm::run(std::string filepath) {
     for (std::thread& th : threads) {
       th.join();
     }
-    
+
     print(i);
     save(filepath+std::to_string(i));
-    
+
     /* 次世代集団の作成 */
     nextGenerationGeneCreate();
     timer.show(SEC, "");
@@ -197,16 +194,11 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  Timer timer;
-  timer.start();
   GeneticAlgorithm ga(16, 3, 0.1, 0.6, 1);
-  timer.show(MILLISEC, "GA Constractor.");
   if (argc != 3) {
     std::cout << "Usage: ./bin/ga test filepath" << std::endl;
     return 1;
   }
-  timer.start();
   Options::ParseCommandLine(argc, argv);
-  timer.show(MILLISEC, "Flag Parser.");
   ga.run("hinton_ga");
 }
