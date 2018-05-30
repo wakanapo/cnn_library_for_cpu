@@ -15,6 +15,7 @@ def main(filename, n):
                 genoms.ParseFromString(f.read())
         except IOError:
             print ("Could not open file.")
+            continue
             
         for i in range(len(genoms.genoms)):
             plt.scatter(genoms.genoms[i].gene,
