@@ -35,7 +35,7 @@ def main(filename, n):
                         c=colors[i])
 
         plt.xlim(-1.0, 1.0)
-        plt.ylim(0, n)
+        plt.ylim(-1, n+1)
         plt.title("genoms")
         plt.ylabel("genoms #")
         plt.xlabel("range")
