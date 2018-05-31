@@ -126,15 +126,15 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   std::uniform_real_distribution<> rand(0.0, 1.0);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
-  int elite = std::max(1, (int)(genom_num_ * 0.2));
-  std::copy(genoms_.begin(), genoms_.begin() + elite,
-            std::back_inserter(new_genoms));
-  
+
   while (new_genoms.size() < genom_num_) {
-    int idx = std::rand() % genom_num_;
-    auto r = rand(mt) * genoms_[idx].getEvaluation() * 2;
-    if (r < mutation_rate_ + cross_rate_)
+    int idx = randomGenomIndex();
+    auto r = rand(mt);
+    /* 選択 */
+    if (r > mutation_rate_ + cross_rate_) {
+      new_genoms.push_back(genoms_[idx]);
       continue;
+    }
 
     /* 突然変異 */
     if (r < mutation_rate_) {
@@ -153,6 +153,19 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   genoms_ = std::move(new_genoms);
 }
 
+int GeneticAlgorithm::randomGenomIndex() const{
+  std::random_device seed;
+  std::mt19937 mt(seed());
+  std::uniform_real_distribution<> rand(0.0, 1.0);
+  float r = rand(mt);
+  for (int i = 0; i < genom_num_; ++i) {
+    float ratio = genoms_[i].getEvaluation() / (average_ * genom_num_);
+    if (r < ratio)
+      return i;
+    r -= ratio;
+  }
+  return std::rand() % genom_num_;
+}
 
 void GeneticAlgorithm::print(int i) {
   float min = 1.0;
@@ -167,12 +180,12 @@ void GeneticAlgorithm::print(int i) {
     if (evaluation > max)
       max = evaluation;
   }
-  
+  average_ = sum / genom_num_;
   std::cout << "-------------" << std::endl;
   std::cout << "世代: " << i << std::endl;
   std::cout << "Min: " << min << std::endl;
   std::cout << "Max: " << max << std::endl;
-  std::cout << "Ave: " << sum / genom_num_ << std::endl;
+  std::cout << "Ave: " << average_ << std::endl;
 }
 
 void GeneticAlgorithm::save(std::string filename) {

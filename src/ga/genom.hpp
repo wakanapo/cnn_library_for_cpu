@@ -25,6 +25,7 @@ public:
   std::vector<Genom> crossover(const Genom& parent) const;
   Genom mutation(const Genom& parent) const;
   void nextGenerationGeneCreate();
+  int randomGenomIndex() const;
   void run(std::string filename);
   void save(std::string filepath);
   void print(int i);
@@ -39,6 +40,7 @@ private:
   float cross_rate_;
   float mutation_rate_;
   int max_generation_;
+  float average_;
   void moveGenoms(std::vector<Genom>&& genom);
   std::vector<Genom> genoms_;
 };
