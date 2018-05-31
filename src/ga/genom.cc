@@ -126,6 +126,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   std::uniform_real_distribution<> rand(0.0, 1.0);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
+  new_genoms.push_back(genoms_[0]);
 
   while (new_genoms.size() < genom_num_) {
     int idx = randomGenomIndex();
