@@ -226,8 +226,8 @@ void GeneticAlgorithm::run(std::string filepath) {
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 3) {
-    std::cout << "Usage: ./bin/ga first_genom_file  input_file" << std::endl;
+  if (argc < 3) {
+    std::cerr << "Usage: ./bin/ga first_genom_file  input_file" << std::endl;
     return 1;
   }
   Options::ParseCommandLine(argc, argv);
