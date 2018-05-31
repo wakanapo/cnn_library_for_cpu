@@ -118,7 +118,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   */
   std::sort(genoms_.begin(), genoms_.end(),
             [](const Genom& a, const Genom& b) {
-              return  a.getEvaluation() <  b.getEvaluation();
+              return  a.getEvaluation() >  b.getEvaluation();
             });
   
   std::random_device seed;
