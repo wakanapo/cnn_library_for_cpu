@@ -32,7 +32,7 @@ def make_random(n):
     ranges /= abs(max(ranges, key=abs))
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
-def main(bit, genom_num):
+def main(bit, genom_num, filename):
     genes = [make_normal(bit), make_linear(bit), make_log(bit)]
     for _ in range(genom_num-3):
         genes.append(make_random(bit))
@@ -42,12 +42,12 @@ def main(bit, genom_num):
         genoms = message.genoms.add()
         genoms.gene.extend(gene)
 
-    with open(pwd+"/data/first_genom.pb", "wb") as f:
+    with open("{}/data/{}.pb".format(pwd, filename)) as f:
         f.write(message.SerializeToString())
 
 if __name__ =="__main__":
     argv = sys.argv
-    if len(argv) != 3:
-        print("Usage: Python {} bit# genom#".format(argv[0]))
+    if len(argv) != 4:
+        print("Usage: Python {} bit# genom# filename".format(argv[0]))
         quit()
-    main(int(argv[1]), int(argv[2]))
+    main(int(argv[1]), int(argv[2]), argv[3])
