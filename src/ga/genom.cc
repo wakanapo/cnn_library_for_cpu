@@ -3,9 +3,12 @@
 #include <cstdlib>
 #include <fstream>
 #include <future>
+#include <iomanip>
 #include <iostream>
 #include <random>
+#include <sstream>
 #include <string>
+#include <sys/stat.h>
 #include <thread>
 #include <vector>
 
@@ -91,23 +94,23 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   return {{genom_one, 0}, {genom_two, 0}};
 }
 
-  Genom GeneticAlgorithm::mutation(const Genom& parent) const {
-    /*
-      突然変異関数
-    */
-    std::random_device seed;
-    std::mt19937 mt(seed());
-    std::uniform_real_distribution<> rand(0.0, 1.0);
-    std::vector<float> genes = parent.getGenom();
+Genom GeneticAlgorithm::mutation(const Genom& parent) const {
+  /*
+    突然変異関数
+  */
+  std::random_device seed;
+  std::mt19937 mt(seed());
+  std::uniform_real_distribution<> rand(0.0, 1.0);
+  std::vector<float> genes = parent.getGenom();
   
-    for (int i = 0; i < genom_length_; ++i) {
-      float left = (i == 0) ? genes[i] - 0.05 : genes[i-1];
-      float right = (i == genom_length_ - 1) ? genes[i] + 0.05 : genes[i+1];
-      std::uniform_real_distribution<> new_pos(left, right);
-      genes[i] = new_pos(mt);
-    }
-    return {genes, 0};
+  for (int i = 0; i < genom_length_; ++i) {
+    float left = (i == 0) ? genes[i] - 0.05 : genes[i-1];
+    float right = (i == genom_length_ - 1) ? genes[i] + 0.05 : genes[i+1];
+    std::uniform_real_distribution<> new_pos(left, right);
+    genes[i] = new_pos(mt);
   }
+  return {genes, 0};
+}
 
 
 void GeneticAlgorithm::nextGenerationGeneCreate() {
@@ -224,12 +227,22 @@ void GeneticAlgorithm::run(std::string filepath) {
     }
 
     print(i);
-    save(filepath+std::to_string(i));
+    std::stringstream ss;
+    ss << std::setw(3) << std::setfill('0') << i;
+    save(filepath+"generation"+ss.str());
 
     /* 次世代集団の作成 */
     nextGenerationGeneCreate();
     timer.show(SEC, "");
   }
+}
+
+std::string timestamp() {
+  std::time_t t = time(nullptr);
+  const tm* lt = localtime(&t);
+  std::stringstream ss;
+  ss << lt->tm_year-100 << lt->tm_mon+1 << lt->tm_mday;
+  return ss.str();
 }
 
 int main(int argc, char* argv[]) {
@@ -239,5 +252,7 @@ int main(int argc, char* argv[]) {
   }
   Options::ParseCommandLine(argc, argv);
   GeneticAlgorithm ga = GeneticAlgorithm::setup();
-  ga.run("hinton_ga");
+  std::string filepath = "data/" + timestamp();
+  mkdir(filepath.c_str(), 0777);
+  ga.run(filepath);
 }
