@@ -241,7 +241,9 @@ std::string timestamp() {
   std::time_t t = time(nullptr);
   const tm* lt = localtime(&t);
   std::stringstream ss;
-  ss << lt->tm_year-100 << lt->tm_mon+1 << lt->tm_mday;
+  ss << lt->tm_year-100;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_mon+1;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_mday;
   return ss.str();
 }
 
