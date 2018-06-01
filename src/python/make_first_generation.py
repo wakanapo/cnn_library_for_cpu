@@ -42,7 +42,7 @@ def main(bit, genom_num, filename):
         genoms = message.genoms.add()
         genoms.gene.extend(gene)
 
-    with open("{}/data/{}.pb".format(pwd, filename)) as f:
+    with open("{}/data/{}.pb".format(pwd, filename), "wb") as f:
         f.write(message.SerializeToString())
 
 if __name__ =="__main__":
