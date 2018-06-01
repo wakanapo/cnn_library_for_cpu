@@ -67,23 +67,21 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   /*
     二点交叉を行う関数
   */
-  int center = rand() % (genom_length_ - 1);
+  int center = rand() % (genom_length_ - 2) + 1;
   int range = rand() % std::min(center, (genom_length_ - center));
-
   int spouse = rand() % (genom_num_ / 2);
   std::vector<float> genom_one = parent.getGenom();
   std::vector<float> genom_two = genoms_[spouse].getGenom();
   auto inc_itr = std::lower_bound(genom_two.begin(), genom_two.end(),
-                                     genom_one[center]);
+                                  genom_one[center]);
   auto dic_itr = inc_itr;
   dic_itr--;
-
   for (int i = 0; i < range; ++i) {
     if (inc_itr != genom_two.end()) {
       std::swap(*inc_itr, genom_one[center+i]);
       ++inc_itr;
     }
-    if (i != 0 && dic_itr != genom_two.begin()) {
+    if (i != 0 && dic_itr < genom_two.begin()) {
       std::swap(*dic_itr, genom_one[center-i]);
       --dic_itr;
     }
@@ -93,23 +91,23 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   return {{genom_one, 0}, {genom_two, 0}};
 }
 
-Genom GeneticAlgorithm::mutation(const Genom& parent) const {
-  /*
-    突然変異関数
-  */
-  std::random_device seed;
-  std::mt19937 mt(seed());
-  std::uniform_real_distribution<> rand(0.0, 1.0);
-  std::vector<float> genes = parent.getGenom();
+  Genom GeneticAlgorithm::mutation(const Genom& parent) const {
+    /*
+      突然変異関数
+    */
+    std::random_device seed;
+    std::mt19937 mt(seed());
+    std::uniform_real_distribution<> rand(0.0, 1.0);
+    std::vector<float> genes = parent.getGenom();
   
-  for (int i = 0; i < genom_length_; ++i) {
-    float left = (i == 0) ? genes[i] - 0.05 : genes[i-1];
-    float right = (i == genom_length_ - 1) ? genes[i] + 0.05 : genes[i+1];
-    std::uniform_real_distribution<> new_pos(left, right);
-    genes[i] = new_pos(mt);
+    for (int i = 0; i < genom_length_; ++i) {
+      float left = (i == 0) ? genes[i] - 0.05 : genes[i-1];
+      float right = (i == genom_length_ - 1) ? genes[i] + 0.05 : genes[i+1];
+      std::uniform_real_distribution<> new_pos(left, right);
+      genes[i] = new_pos(mt);
+    }
+    return {genes, 0};
   }
-  return {genes, 0};
-}
 
 
 void GeneticAlgorithm::nextGenerationGeneCreate() {
@@ -150,7 +148,6 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
       continue;
     }
   }
-
   genoms_ = std::move(new_genoms);
 }
 
