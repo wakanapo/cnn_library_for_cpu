@@ -229,7 +229,7 @@ void GeneticAlgorithm::run(std::string filepath) {
     print(i);
     std::stringstream ss;
     ss << std::setw(3) << std::setfill('0') << i;
-    save(filepath+"generation"+ss.str());
+    save(filepath+"/generation"+ss.str());
 
     /* 次世代集団の作成 */
     nextGenerationGeneCreate();
