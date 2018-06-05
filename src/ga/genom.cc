@@ -51,8 +51,8 @@ GeneticAlgorithm GeneticAlgorithm::setup() {
                       Options::GetCrossRate(),Options::GetMutationRate(),
                       Options::GetMaxGeneration());
   std::vector<Genom> genoms;
-  std::vector<float> gene;
   for (int i = 0; i < genes.genoms_size(); ++i) {
+    std::vector<float> gene;
     for (int j = 0; j < genes.genoms(i).gene_size(); ++j) {
       gene.push_back(genes.genoms(i).gene(j));
     }
