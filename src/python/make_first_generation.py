@@ -18,7 +18,7 @@ def make_normal(n):
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def make_linear(n):
-    return np.linspace(-1.0, 1.0, 2**n) * random.uniform(0.1, 1.0)
+    return np.linspace(-1.0, 1.0, 2**n) * random.uniform(0.1, 0.7)
 
 def make_log(n):
      ranges = np.concatenate((-1 * np.logspace(-1, 2.0, num=2**n),
