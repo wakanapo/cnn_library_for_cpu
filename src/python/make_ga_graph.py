@@ -11,7 +11,7 @@ def main(filename, n):
     colors = np.random.rand(100, 3)
     for j in range(n):
         try:
-            with open(pwd+"/data/{0}/{0}{1}.pb".format(filename, j), "rb") as f:
+            with open(pwd+"/data/{0}/generation{1:03d}.pb".format(filename, j), "rb") as f:
                 genoms.ParseFromString(f.read())
         except IOError:
             print ("Could not open file.")
@@ -27,7 +27,7 @@ def main(filename, n):
         plt.title("genoms")
         plt.ylabel("accuracy")
         plt.xlabel("range")
-        plt.savefig(pwd+"/data/{0}/evaluation_{1}.png".format(filename, j))
+        plt.savefig(pwd+"/data/{0}/evaluation_{1:03d}.png".format(filename, j))
         plt.close()
         
         for i in range(len(genoms.genoms)):
@@ -39,7 +39,7 @@ def main(filename, n):
         plt.title("genoms")
         plt.ylabel("genoms #")
         plt.xlabel("range")
-        plt.savefig(pwd+"/data/{0}/genoms_{1}.png".format(filename, j))
+        plt.savefig(pwd+"/data/{0}/genoms_{1:03d}.png".format(filename, j))
         plt.close()
 
 if __name__=="__main__":
