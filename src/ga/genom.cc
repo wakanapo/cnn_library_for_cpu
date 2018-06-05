@@ -212,6 +212,11 @@ void GeneticAlgorithm::run(std::string filepath) {
   model.load();
   for (int i = 0; i < max_generation_; ++i) {
     timer.start();
+    if (i != 0) {
+      /* 次世代集団の作成 */
+      nextGenerationGeneCreate();
+    }
+    
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
     for (auto& genom: genoms_) {
@@ -230,9 +235,6 @@ void GeneticAlgorithm::run(std::string filepath) {
     std::stringstream ss;
     ss << std::setw(3) << std::setfill('0') << i;
     save(filepath+"/generation"+ss.str());
-
-    /* 次世代集団の作成 */
-    nextGenerationGeneCreate();
     timer.show(SEC, "");
   }
 }
