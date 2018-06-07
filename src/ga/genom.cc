@@ -15,6 +15,7 @@
 #include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
+#include "util/color.hpp"
 #include "util/flags.hpp"
 #include "util/read_data.hpp"
 #include "util/timer.hpp"
@@ -182,11 +183,11 @@ void GeneticAlgorithm::print(int i) {
       max = evaluation;
   }
   average_ = sum / genom_num_;
-  std::cout << "-------------" << std::endl;
-  std::cout << "世代: " << i << std::endl;
+  std::cout << "generation: " << i << std::endl;
   std::cout << "Min: " << min << std::endl;
   std::cout << "Max: " << max << std::endl;
   std::cout << "Ave: " << average_ << std::endl;
+  std::cout << "-------------" << std::endl;
 }
 
 void GeneticAlgorithm::save(std::string filename) {
@@ -214,11 +215,14 @@ void GeneticAlgorithm::run(std::string filepath) {
     timer.start();
     if (i != 0) {
       /* 次世代集団の作成 */
+      std::cerr << "Creatin next generation ..... ";
       nextGenerationGeneCreate();
+      std::cerr << coloringText("OK!", GREEN) << std::endl;
     }
     
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
+    std::cerr << "Evaluating genoms ..... ";
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
         threads.push_back(std::thread([&genom, &test, model] {
@@ -230,11 +234,14 @@ void GeneticAlgorithm::run(std::string filepath) {
     for (std::thread& th : threads) {
       th.join();
     }
+    std::cerr << coloringText("OK!", GREEN) << std::endl;
 
-    print(i);
+    std::cerr << "Saving generation data ..... ";
     std::stringstream ss;
     ss << std::setw(3) << std::setfill('0') << i;
     save(filepath+"/generation"+ss.str());
+    std::cerr << coloringText("OK!", GREEN) << std::endl;
+    print(i);
     timer.show(SEC, "");
   }
 }
