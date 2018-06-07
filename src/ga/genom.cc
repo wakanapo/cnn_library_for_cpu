@@ -56,7 +56,7 @@ GeneticAlgorithm GeneticAlgorithm::setup() {
     for (int j = 0; j < genes.genoms(i).gene_size(); ++j) {
       gene.push_back(genes.genoms(i).gene(j));
     }
-    genoms.push_back({gene, 0});
+    genoms.push_back({gene, genes.genoms(i).evaluation()});
   }
   ga.moveGenoms(std::move(genoms));
   return ga;
