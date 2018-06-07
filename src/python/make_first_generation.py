@@ -32,9 +32,12 @@ def make_random(n):
     ranges /= abs(max(ranges, key=abs))
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
-def main(bit, genom_num, filename):
-    genes = [make_normal(bit), make_linear(bit), make_log(bit)]
-    for _ in range(genom_num-3):
+def main(bit, genom_num, filename, flag):
+    if flag == "random":
+        genes = []
+    else:
+        genes = [make_normal(bit), make_linear(bit), make_log(bit)]
+    for _ in range(genom_num - len(genes)):
         genes.append(make_random(bit))
 
     message = genom_pb2.Genoms();
@@ -47,7 +50,7 @@ def main(bit, genom_num, filename):
 
 if __name__ =="__main__":
     argv = sys.argv
-    if len(argv) != 4:
-        print("Usage: Python {} bit# genom# filename".format(argv[0]))
+    if len(argv) != 5:
+        print("Usage: Python {} bit# genom# filename flag".format(argv[0]))
         quit()
-    main(int(argv[1]), int(argv[2]), argv[3])
+    main(int(argv[1]), int(argv[2]), argv[3], argv[4])
