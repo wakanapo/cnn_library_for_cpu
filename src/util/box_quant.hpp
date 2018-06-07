@@ -36,7 +36,7 @@ public:
     return val;
   };
 
-  inline const int get() const {return val_;}
+  inline int get() const {return val_;}
 
   Box &operator=(float& fl) {
     val_ = fromFloat(fl);

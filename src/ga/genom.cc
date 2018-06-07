@@ -85,7 +85,7 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
       std::swap(*inc_itr, genom_one[center+i]);
       ++inc_itr;
     }
-    if (i != 0 && dic_itr < genom_two.begin()) {
+    if (i != 0 && dic_itr >= genom_two.begin()) {
       std::swap(*dic_itr, genom_one[center-i]);
       --dic_itr;
     }
@@ -215,7 +215,7 @@ void GeneticAlgorithm::run(std::string filepath) {
     timer.start();
     if (i != 0) {
       /* 次世代集団の作成 */
-      std::cerr << "Creatin next generation ..... ";
+      std::cerr << "Creating next generation ..... ";
       nextGenerationGeneCreate();
       std::cerr << coloringText("OK!", GREEN) << std::endl;
     }

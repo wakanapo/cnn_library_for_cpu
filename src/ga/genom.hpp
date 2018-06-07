@@ -6,7 +6,7 @@
 class Genom {
 public:
   Genom(std::vector<float> genom_list, float evaluation):
-    genom_list_(genom_list), evaluation_(evaluation) {
+    genom_list_(std::move(genom_list)), evaluation_(evaluation) {
   };
   std::vector<float> getGenom() const { return genom_list_; };
   float getEvaluation() const { return evaluation_; };

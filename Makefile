@@ -1,7 +1,7 @@
 CXX := clang++
 PROTOC := protoc
 ENABLE_LOGGING := 0
-CXXFLAGS := -std=c++14 -Wall -O2 -pthread -DENABLE_LOGGING=$(ENABLE_LOGGING)
+CXXFLAGS := -std=c++14 -g3 -Wall -Wextra -O2 -pthread -DENABLE_LOGGING=$(ENABLE_LOGGING)
 LDFLAGS := -L/usr/local/lib `pkg-config --cflags --libs protobuf`
 TESTFLAGS := -lgtest_main -lgtest -lpthread `pkg-config --cflags --libs protobuf`
 
