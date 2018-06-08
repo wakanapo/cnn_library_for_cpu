@@ -10,9 +10,10 @@
 class Box {
 public:
   Box() : partation_(GlobalParams::getInstance()->partition()) {};
-  Box(const Box& other) : partation_(GlobalParams::getInstance()->partition()) {};
+  Box(const Box& other) : partation_(GlobalParams::getInstance()->partition()),
+                          val_(other.get()){};
   Box(const Box&& other) : partation_(GlobalParams::getInstance()->partition()),
-                           val_(other.get()) {}
+                           val_(std::move(other.get())) {}
   Box(int other) : partation_(GlobalParams::getInstance()->partition()),
                    val_(other) {}
   Box(float other) : partation_(GlobalParams::getInstance()->partition()),

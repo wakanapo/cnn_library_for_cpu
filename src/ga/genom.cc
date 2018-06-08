@@ -130,7 +130,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   new_genoms.reserve(genom_num_);
   new_genoms.push_back(genoms_[0]);
 
-  while (new_genoms.size() < genom_num_) {
+  while ((int)new_genoms.size() < genom_num_) {
     int idx = randomGenomIndex();
     auto r = rand(mt);
     /* 選択 */
@@ -146,7 +146,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
     }
 
     /* 交叉 */
-    if (new_genoms.size() <= genom_num_ - 2) {
+    if ((int)new_genoms.size() <= genom_num_ - 2) {
       auto genoms = crossover(genoms_[idx]);
       std::copy(genoms.begin(), genoms.end(), std::back_inserter(new_genoms));
       continue;
