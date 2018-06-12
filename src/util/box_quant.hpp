@@ -36,7 +36,7 @@ public:
   float toFloat() const {
     if (this->val_ == 0)
       return partation_[0];
-    if (this->val_ == partation_.size())
+    if (this->val_ == (int)partation_.size())
       return partation_[partation_.size()-1];
     return  (partation_[this->val_] + partation_[this->val_-1]) / 2.0;
   }
