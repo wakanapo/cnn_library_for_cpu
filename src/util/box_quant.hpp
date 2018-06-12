@@ -9,15 +9,16 @@ class Box {
 public:
   Box() : partation_(GlobalParams::getInstance()->partition()) { offset_ = partation_.size() / 2; };
   Box(const Box& other) : partation_(GlobalParams::getInstance()->partition()),
-                          val_(other.get()){ offset_ = partation_.size() / 2; };
+                          val_(other.get()), offset_(partation_.size() / 2) {};
   Box(const Box&& other) : partation_(GlobalParams::getInstance()->partition()),
-                           val_(std::move(other.get())) { offset_ = partation_.size() / 2; }
+                           val_(std::move(other.get())),
+                           offset_(partation_.size() / 2) {};
   Box(int other) : partation_(GlobalParams::getInstance()->partition()),
-                   val_(other) { offset_ = partation_.size() / 2; }
+                   val_(other), offset_(partation_.size() / 2) {};
   Box(float other) : partation_(GlobalParams::getInstance()->partition()),
-                     val_(fromFloat(other)) { offset_ = partation_.size() / 2; }
+                     val_(fromFloat(other)), offset_(partation_.size() / 2) {};
   Box(double other) : partation_(GlobalParams::getInstance()->partition()),
-                      val_(fromFloat(other)) { offset_ = partation_.size() / 2; }
+                      val_(fromFloat(other)), offset_(partation_.size() / 2) {};
   
   float toFloat() const {
     if (this->val_ == 0)
