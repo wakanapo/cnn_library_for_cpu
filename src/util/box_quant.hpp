@@ -5,35 +5,33 @@
 
 #include "ga/set_gene.hpp"
 
-#define kOffset 8
-
 class Box {
 public:
-  Box() : partation_(GlobalParams::getInstance()->partition()) {};
+  Box() : partation_(GlobalParams::getInstance()->partition()) { offset_ = partation_.size() / 2; };
   Box(const Box& other) : partation_(GlobalParams::getInstance()->partition()),
-                          val_(other.get()){};
+                          val_(other.get()){ offset_ = partation_.size() / 2; };
   Box(const Box&& other) : partation_(GlobalParams::getInstance()->partition()),
-                           val_(std::move(other.get())) {}
+                           val_(std::move(other.get())) { offset_ = partation_.size() / 2; }
   Box(int other) : partation_(GlobalParams::getInstance()->partition()),
-                   val_(other) {}
+                   val_(other) { offset_ = partation_.size() / 2; }
   Box(float other) : partation_(GlobalParams::getInstance()->partition()),
-                     val_(fromFloat(other)) {}
+                     val_(fromFloat(other)) { offset_ = partation_.size() / 2; }
   Box(double other) : partation_(GlobalParams::getInstance()->partition()),
-                      val_(fromFloat(other)) {}
+                      val_(fromFloat(other)) { offset_ = partation_.size() / 2; }
   
   float toFloat() const {
     if (this->val_ == 0)
       return 0;
-    return (this->val_ < 0 ? partation_[this->val_ + kOffset] : partation_[this->val_ + kOffset - 1]);
+    return (this->val_ < 0 ? partation_[this->val_ + offset_] : partation_[this->val_ + offset_ - 1]);
   }
   
   int fromFloat(float fl) const {
-    return  std::upper_bound(partation_.begin(), partation_.end(), fl) - partation_.begin() - kOffset;
+    return  std::upper_bound(partation_.begin(), partation_.end(), fl) - partation_.begin() - offset_;
   }
 
-  static Box min() {
+ static Box min() {
     Box val;
-    val.val_ = -kOffset;
+    val.val_ = -4;
     return val;
   };
 
@@ -89,6 +87,7 @@ public:
 private:
   std::vector<float> partation_;
   int val_;
+  int offset_;
 };
 
 namespace std {
