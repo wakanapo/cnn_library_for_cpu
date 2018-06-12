@@ -9,20 +9,36 @@ class Box {
 public:
   Box() : partation_(GlobalParams::getInstance()->partition()) {};
   Box(const Box& other) : partation_(GlobalParams::getInstance()->partition()),
-                          val_(other.get()) {};
+                          val_(other.get()) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(const Box&& other) : partation_(GlobalParams::getInstance()->partition()),
-                           val_(std::move(other.get())) {};
+                           val_(std::move(other.get())) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(int other) : partation_(GlobalParams::getInstance()->partition()),
-                   val_(other) {};
+                   val_(other) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(float other) : partation_(GlobalParams::getInstance()->partition()),
-                     val_(fromFloat(other)) {};
+                     val_(fromFloat(other)) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(double other) : partation_(GlobalParams::getInstance()->partition()),
-                      val_(fromFloat(other)) {};
-  
+                      val_(fromFloat(other)) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   float toFloat() const {
     if (this->val_ == 0)
-      return 0;
-    return (this->val_ < 0 ? partation_[this->val_] : partation_[this->val_-1]);
+      return partation_[0];
+    if (this->val_ == partation_.size())
+      return partation_[partation_.size()-1];
+    return  (partation_[this->val_] + partation_[this->val_-1]) / 2.0;
   }
   
   int fromFloat(float fl) const {
@@ -87,6 +103,7 @@ public:
 private:
   std::vector<float> partation_;
   int val_;
+  int zero_;
 };
 
 namespace std {
