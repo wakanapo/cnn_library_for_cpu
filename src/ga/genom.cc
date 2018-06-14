@@ -231,7 +231,7 @@ void GeneticAlgorithm::run(std::string filepath) {
     std::cerr << "Evaluating genoms ..... ";
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread([&genom, &test, model] {
+        threads.push_back(std::thread([&, genom]() mutable {
               GlobalParams::setParams(genom.getGenom());
               genom.executeEvaluation(model, test);
             }));
