@@ -14,12 +14,12 @@
 
 #include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
-#include "util/box_quant.hpp"
+#include "util/block.hpp"
 #include "util/color.hpp"
 #include "util/flags.hpp"
 #include "util/read_data.hpp"
 #include "util/timer.hpp"
-#include "ga/set_gene.hpp"
+#include "util/block_params.hpp"
 #include "protos/genom.pb.h"
 
 using Model = HintonCifar10<float>;

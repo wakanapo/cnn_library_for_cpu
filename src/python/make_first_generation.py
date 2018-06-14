@@ -9,8 +9,8 @@ import genom_pb2
 
 def make_normal(n):
     ranges = []
-    for i in range(1, 2**n + 1, 2):
-        a,b = norm.interval(alpha=i/(2**n+2), loc=0, scale=1)
+    for i in range(1, n + 1, 2):
+        a,b = norm.interval(alpha=i/(n+2), loc=0, scale=1)
         ranges.append(a)
         ranges.append(b)
     ranges = np.asarray(ranges)
@@ -18,17 +18,17 @@ def make_normal(n):
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def make_linear(n):
-    return np.linspace(-1.0, 1.0, 2**n) * random.uniform(0.1, 0.7)
+    return np.linspace(-1.0, 1.0, n) * random.uniform(0.1, 0.7)
 
 def make_log(n):
-     ranges = np.concatenate((-1 * np.logspace(-1, 2.0, num=2**n),
-                              np.logspace(-1, 2.0, num=2**n)))
+     ranges = np.concatenate((-1 * np.logspace(-1, 2.0, num=n),
+                              np.logspace(-1, 2.0, num=n)))
      ranges = ranges[0::2]
      ranges /= abs(max(ranges, key=abs))
      return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def make_random(n):
-    ranges = np.concatenate((np.random.rand(2**(n-1)), np.random.rand(2**(n-1)) * -1))
+    ranges = np.concatenate((np.random.rand(n-1), np.random.rand(n-1) * -1))
     ranges /= abs(max(ranges, key=abs))
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
@@ -51,6 +51,6 @@ def main(bit, genom_num, filename, flag):
 if __name__ =="__main__":
     argv = sys.argv
     if len(argv) != 5:
-        print("Usage: Python {} bit# genom# filename flag".format(argv[0]))
+        print("Usage: Python {} partition# genom# filename flag".format(argv[0]))
         quit()
     main(int(argv[1]), int(argv[2]), argv[3], argv[4])
