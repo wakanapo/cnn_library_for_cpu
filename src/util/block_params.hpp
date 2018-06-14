@@ -5,19 +5,19 @@
 
 class BlockParams {
 public:
-  const std::vector<float>& partition() const {
+  std::vector<float> partition() const {
     return partition_;
   }
-  const int add(int a, int b) const {
+  int add(int a, int b) const {
     return add_[a][b];
   }
-  const int sub(int a, int b) const {
+  int sub(int a, int b) const {
     return sub_[a][b];
   }
-  const int mul(int a, int b) const {
+  int mul(int a, int b) const {
     return mul_[a][b];
   }
-  const int div(int a, int b) const {
+  int div(int a, int b) const {
     return div_[a][b];
   }
   int fromFloat(float val) const;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/box_quant.hpp"
+#include "util/block.hpp"
 #include "util/converter.hpp"
 #include "util/function.hpp"
 #include "util/tensor.hpp"

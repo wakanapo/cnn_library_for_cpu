@@ -226,7 +226,7 @@ void GeneticAlgorithm::run(std::string filepath) {
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
         threads.push_back(std::thread([&genom, &test, model] {
-              GlobalParams::setParams(genom.getGenom());
+              BlockParams::setParams(genom.getGenom());
               genom.executeEvaluation(model, test);
             }));
       }
