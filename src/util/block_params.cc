@@ -1,5 +1,7 @@
 #include "util/block_params.hpp"
+#include "util/color.hpp"
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <thread>
 
@@ -16,6 +18,12 @@ float BlockParams::toFloat(int val) const {
 }
 
 BlockParams* BlockParams::getInstance() {
+  if (g_block_params == nullptr) {
+    std::cerr << coloringText("ERROR!", Color::RED)
+              << ": Please call BlockParams::setParams(partition) first."
+              << std::endl;
+    exit(1);
+  }
   return g_block_params.get();
 }
 
