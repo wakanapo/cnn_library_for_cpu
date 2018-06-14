@@ -7,7 +7,7 @@
 
 class Box {
 public:
-  Box();
+  Box() {};
   Box(const Box& other) : val_(other.get()) {};
   Box(const Box&& other) :val_(std::move(other.get())) {};
   Box(int other) : val_(BlockParams::getInstance()->fromFloat(other)) {};
@@ -22,7 +22,7 @@ public:
 
   inline int get() const {return val_;}
 
-  float toFloat() {
+  float toFloat() const {
     return BlockParams::getInstance()->toFloat(this->val_);
   }
 
@@ -64,6 +64,10 @@ public:
     Box box;
     box.val_ = BlockParams::getInstance()->sub(this->val_, other.get());
     return box;
+  }
+
+  bool operator!=(const Box& bx) const {
+    return val_ != bx.get();
   }
 
   bool operator==(const Box& bx) const {

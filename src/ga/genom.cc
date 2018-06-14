@@ -22,7 +22,7 @@
 #include "util/block_params.hpp"
 #include "protos/genom.pb.h"
 
-using Model = HintonCifar10<float>;
+using Model = HintonCifar10<Box>;
 
 template<typename Model>
 void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
