@@ -8,7 +8,7 @@
 #include "cnn/simple_conv_net.hpp"
 #include "cnn/hinton_cifar10.hpp"
 #include "half.hpp"
-#include "util/box_quant.hpp"
+#include "util/block.hpp"
 
 using half_float::half;
 template<typename T>
