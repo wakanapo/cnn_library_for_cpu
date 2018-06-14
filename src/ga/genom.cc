@@ -3,15 +3,19 @@
 #include <cstdlib>
 #include <fstream>
 #include <future>
+#include <iomanip>
 #include <iostream>
 #include <random>
+#include <sstream>
 #include <string>
+#include <sys/stat.h>
 #include <thread>
 #include <vector>
 
 #include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
+#include "util/color.hpp"
 #include "util/flags.hpp"
 #include "util/read_data.hpp"
 #include "util/timer.hpp"
@@ -35,27 +39,53 @@ void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
   evaluation_ = (float)cnt / (float)4096;
 }
 
+GeneticAlgorithm GeneticAlgorithm::setup() {
+  Gene::Genoms genes;
+  std::fstream input(Options::GetFirstGenomFile(),
+                     std::ios::in | std::ios::binary);
+  if (!genes.ParseFromIstream(&input)) {
+    std::cerr << "Cannot load first genoms." << std::endl;
+    exit(1);
+  }
+
+  GeneticAlgorithm ga(genes.genoms(0).gene_size(), genes.genoms_size(),
+                      Options::GetCrossRate(),Options::GetMutationRate(),
+                      Options::GetMaxGeneration());
+  std::vector<Genom> genoms;
+  for (int i = 0; i < genes.genoms_size(); ++i) {
+    std::vector<float> gene;
+    for (int j = 0; j < genes.genoms(i).gene_size(); ++j) {
+      gene.push_back(genes.genoms(i).gene(j));
+    }
+    genoms.push_back({gene, genes.genoms(i).evaluation()});
+  }
+  ga.moveGenoms(std::move(genoms));
+  return ga;
+}
+
+void GeneticAlgorithm::moveGenoms(std::vector<Genom>&& genoms) {
+  genoms_ = std::move(genoms);
+}
+
 std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
   /*
     二点交叉を行う関数
   */
-  int center = rand() % (genom_length_ - 1);
+  int center = rand() % (genom_length_ - 2) + 1;
   int range = rand() % std::min(center, (genom_length_ - center));
-
   int spouse = rand() % (genom_num_ / 2);
   std::vector<float> genom_one = parent.getGenom();
   std::vector<float> genom_two = genoms_[spouse].getGenom();
   auto inc_itr = std::lower_bound(genom_two.begin(), genom_two.end(),
-                                     genom_one[center]);
+                                  genom_one[center]);
   auto dic_itr = inc_itr;
   dic_itr--;
-
   for (int i = 0; i < range; ++i) {
     if (inc_itr != genom_two.end()) {
       std::swap(*inc_itr, genom_one[center+i]);
       ++inc_itr;
     }
-    if (i != 0 && dic_itr != genom_two.begin()) {
+    if (i != 0 && dic_itr >= genom_two.begin()) {
       std::swap(*dic_itr, genom_one[center-i]);
       --dic_itr;
     }
@@ -90,7 +120,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   */
   std::sort(genoms_.begin(), genoms_.end(),
             [](const Genom& a, const Genom& b) {
-              return  a.getEvaluation() <  b.getEvaluation();
+              return  a.getEvaluation() >  b.getEvaluation();
             });
   
   std::random_device seed;
@@ -98,32 +128,46 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   std::uniform_real_distribution<> rand(0.0, 1.0);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
-  
-  for (auto& genom : genoms_) {
-    if (new_genoms.size() == genom_num_)
-      break;
+  new_genoms.push_back(genoms_[0]);
+
+  while ((int)new_genoms.size() < genom_num_) {
+    int idx = randomGenomIndex();
     auto r = rand(mt);
-    /* 突然変異 */
-    if (r < mutation_rate_) {
-      new_genoms.push_back(mutation(genom));
+    /* 選択 */
+    if (r > mutation_rate_ + cross_rate_) {
+      new_genoms.push_back(genoms_[idx]);
       continue;
     }
-    r -= mutation_rate_;
+
+    /* 突然変異 */
+    if (r < mutation_rate_) {
+      new_genoms.push_back(mutation(genoms_[idx]));
+      continue;
+    }
 
     /* 交叉 */
-    if (new_genoms.size() <= genom_num_ - 2 && r < cross_rate_) {
-      auto genoms = crossover(genom);
+    if ((int)new_genoms.size() <= genom_num_ - 2) {
+      auto genoms = crossover(genoms_[idx]);
       std::copy(genoms.begin(), genoms.end(), std::back_inserter(new_genoms));
       continue;
     }
-
-    /* 選択 */
-    new_genoms.push_back(genom);
   }
-
   genoms_ = std::move(new_genoms);
 }
 
+int GeneticAlgorithm::randomGenomIndex() const{
+  std::random_device seed;
+  std::mt19937 mt(seed());
+  std::uniform_real_distribution<> rand(0.0, 1.0);
+  float r = rand(mt);
+  for (int i = 0; i < genom_num_; ++i) {
+    float ratio = genoms_[i].getEvaluation() / (average_ * genom_num_);
+    if (r < ratio)
+      return i;
+    r -= ratio;
+  }
+  return std::rand() % genom_num_;
+}
 
 void GeneticAlgorithm::print(int i) {
   float min = 1.0;
@@ -138,16 +182,15 @@ void GeneticAlgorithm::print(int i) {
     if (evaluation > max)
       max = evaluation;
   }
-
-  std::cout << "世代: " << i << std::endl;
+  average_ = sum / genom_num_;
+  std::cout << "generation: " << i << std::endl;
   std::cout << "Min: " << min << std::endl;
   std::cout << "Max: " << max << std::endl;
-  std::cout << "Ave: " << sum / genom_num_ << std::endl;
+  std::cout << "Ave: " << average_ << std::endl;
   std::cout << "-------------" << std::endl;
 }
 
 void GeneticAlgorithm::save(std::string filename) {
-  std::string home = getenv("HOME");
   Gene::Genoms gs;
   for (auto genom : genoms_) {
     Gene::Gene* g = gs.add_genoms();
@@ -170,8 +213,16 @@ void GeneticAlgorithm::run(std::string filepath) {
   model.load();
   for (int i = 0; i < max_generation_; ++i) {
     timer.start();
+    if (i != 0) {
+      /* 次世代集団の作成 */
+      std::cerr << "Creating next generation ..... ";
+      nextGenerationGeneCreate();
+      std::cerr << coloringText("OK!", GREEN) << std::endl;
+    }
+    
     std::vector<std::thread> threads;
     /* 各遺伝子の評価*/
+    std::cerr << "Evaluating genoms ..... ";
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
         threads.push_back(std::thread([&genom, &test, model] {
@@ -183,22 +234,36 @@ void GeneticAlgorithm::run(std::string filepath) {
     for (std::thread& th : threads) {
       th.join();
     }
+    std::cerr << coloringText("OK!", GREEN) << std::endl;
 
+    std::cerr << "Saving generation data ..... ";
+    std::stringstream ss;
+    ss << std::setw(3) << std::setfill('0') << i;
+    save(filepath+"/generation"+ss.str());
+    std::cerr << coloringText("OK!", GREEN) << std::endl;
     print(i);
-    save(filepath+std::to_string(i));
-
-    /* 次世代集団の作成 */
-    nextGenerationGeneCreate();
     timer.show(SEC, "");
   }
 }
 
+std::string timestamp() {
+  std::time_t t = time(nullptr);
+  const tm* lt = localtime(&t);
+  std::stringstream ss;
+  ss << lt->tm_year-100;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_mon+1;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_mday;
+  return ss.str();
+}
+
 int main(int argc, char* argv[]) {
-  GeneticAlgorithm ga(16, 3, 0.1, 0.6, 1);
-  if (argc != 3) {
-    std::cout << "Usage: ./bin/ga test filepath" << std::endl;
+  if (argc < 3) {
+    std::cerr << "Usage: ./bin/ga first_genom_file  input_file" << std::endl;
     return 1;
   }
   Options::ParseCommandLine(argc, argv);
-  ga.run("hinton_ga");
+  GeneticAlgorithm ga = GeneticAlgorithm::setup();
+  std::string filepath = "data/" + timestamp();
+  mkdir(filepath.c_str(), 0777);
+  ga.run(filepath);
 }

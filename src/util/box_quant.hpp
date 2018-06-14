@@ -5,38 +5,53 @@
 
 #include "ga/set_gene.hpp"
 
-#define kOffset 8
-
 class Box {
 public:
   Box() : partation_(GlobalParams::getInstance()->partition()) {};
-  Box(const Box& other) : partation_(GlobalParams::getInstance()->partition()) {};
+  Box(const Box& other) : partation_(GlobalParams::getInstance()->partition()),
+                          val_(other.get()) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(const Box&& other) : partation_(GlobalParams::getInstance()->partition()),
-                           val_(other.get()) {}
+                           val_(std::move(other.get())) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(int other) : partation_(GlobalParams::getInstance()->partition()),
-                   val_(other) {}
+                   val_(other) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(float other) : partation_(GlobalParams::getInstance()->partition()),
-                     val_(fromFloat(other)) {}
+                     val_(fromFloat(other)) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   Box(double other) : partation_(GlobalParams::getInstance()->partition()),
-                      val_(fromFloat(other)) {}
-  
+                      val_(fromFloat(other)) {
+    zero_ = std::lower_bound(partation_.begin(), partation_.end()-1, 0) -
+      partation_.begin();
+  };
   float toFloat() const {
     if (this->val_ == 0)
-      return 0;
-    return (this->val_ < 0 ? partation_[this->val_ + kOffset] : partation_[this->val_ + kOffset - 1]);
+      return partation_[0];
+    if (this->val_ == (int)partation_.size())
+      return partation_[partation_.size()-1];
+    return  (partation_[this->val_] + partation_[this->val_-1]) / 2.0;
   }
   
   int fromFloat(float fl) const {
-    return  std::upper_bound(partation_.begin(), partation_.end(), fl) - partation_.begin() - kOffset;
+    return  std::upper_bound(partation_.begin(), partation_.end(), fl) - partation_.begin();
   }
 
-  static Box min() {
+ static Box min() {
     Box val;
-    val.val_ = -kOffset;
+    val.val_ = 0;
     return val;
   };
 
-  inline const int get() const {return val_;}
+  inline int get() const {return val_;}
 
   Box &operator=(float& fl) {
     val_ = fromFloat(fl);
@@ -88,6 +103,7 @@ public:
 private:
   std::vector<float> partation_;
   int val_;
+  int zero_;
 };
 
 namespace std {

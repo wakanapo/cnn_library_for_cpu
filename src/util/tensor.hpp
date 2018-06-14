@@ -22,7 +22,7 @@ public:
   int bytes() const;
   Shape shape() const;
   void init();
-  void randomInit(float low, float high);
+  void randomInit(float rate);
   template <typename T_prime>
   void set_v(T_prime* v_in);
   void set_v(std::array<T, kSize> v_in);
@@ -75,18 +75,11 @@ void Tensor<dim1, dim2, dim3, dim4, dim5, T>::set_v(std::array<T, Tensor<dim1, d
 }
 
 template<int dim1, int dim2, int dim3, int dim4, int dim5, typename T>
-void Tensor<dim1, dim2, dim3, dim4, dim5, T>::randomInit(float low, float high) {
-  // std::random is supported by C++11.
-  // I'm not sure whether it's supported Vivado HLS or not.
-  // std::random_device seed_gen;
+void Tensor<dim1, dim2, dim3, dim4, dim5, T>::randomInit(float rate) {
   std::mt19937 engine(123);
-  // std::uniform_real_distribution<> dist(low, high);
-  // for (int i = 0; i < size_; ++i) {
-  //   v_[i] = dist(engine);
-  // }
   std::normal_distribution<> dist(0, 1);
   for (int i = 0; i < kSize; ++i) {
-    v_[i] = std::abs(high)*dist(engine);
+    v_[i] = std::abs(rate)*dist(engine);
   }
 }
 

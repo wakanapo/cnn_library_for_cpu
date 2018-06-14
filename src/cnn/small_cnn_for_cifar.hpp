@@ -13,10 +13,10 @@ public:
   using Type = T;
   using InputType = Tensor3D<32, 32, 3, T>;
   using OutputType = Tensor1D<10, T>;
-  SmallCNNForCifar() : Conv1(Convolution<3, 3, 3, 32, 0, 1, T>(-0.1, 0.1)),
-                       Conv2(Convolution<3, 3, 32, 32, 0, 1, T>(-0.1, 0.1)),
-                       Conv3(Convolution<3, 3, 32, 64, 0, 1, T>(-0.1, 0.1)),
-                       Affine1(Affine<5*5*64, 10, T>(-0.1, 0.1)) {};
+  SmallCNNForCifar() : Conv1(Convolution<3, 3, 3, 32, 0, 1, T>(0.1)),
+                       Conv2(Convolution<3, 3, 32, 32, 0, 1, T>(0.1)),
+                       Conv3(Convolution<3, 3, 32, 64, 0, 1, T>(0.1)),
+                       Affine1(Affine<5*5*64, 10, T>(0.1)) {};
   void train(const InputType& x, const OutputType& t, const T& eps);
   unsigned long predict(const InputType& x) const;
   void save();

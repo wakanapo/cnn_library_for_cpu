@@ -13,9 +13,9 @@ public:
   using Type = T;
   using InputType = Tensor2D<28, 28, T>;
   using OutputType = Tensor1D<10, T>;
-  SimpleConvNet() : Conv1(Convolution<5, 5, 1, 30, 0, 1, T>(-0.1, 0.1)),
-                    Affine1(Affine<12*12*30, 100, T>(-0.1, 0.1)),
-                    Affine2(Affine<100, 10, T>(-0.1, 0.1)) {};
+  SimpleConvNet() : Conv1(Convolution<5, 5, 1, 30, 0, 1, T>(0.1)),
+                    Affine1(Affine<12*12*30, 100, T>(0.1)),
+                    Affine2(Affine<100, 10, T>(0.1)) {};
   void train(const InputType& x, const OutputType& t, const T& eps);
   unsigned long predict(const InputType& x) const;
   void save();

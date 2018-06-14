@@ -17,7 +17,7 @@ class Convolution {
 public:
   using WeightType = Tensor4D<w_row, w_col, input, output, T>;
   using BiasType = Tensor1D<output, T>;
-  Convolution(const float low, const float high);
+  Convolution(const float rate);
   void loadParams(CnnProto::Params* p, int idx);
   void saveParams(CnnProto::Params* p) const;
   void castParams();
@@ -42,8 +42,8 @@ private:
 };
 
 template<int w_row, int w_col, int input, int output, int P, int S, typename T>
-Convolution<w_row, w_col, input, output, P, S, T>::Convolution(const float low, const float high) {
-  w_.randomInit(low, high);
+Convolution<w_row, w_col, input, output, P, S, T>::Convolution(const float rate) {
+  w_.randomInit(rate);
   b_.init();
 }
 
@@ -134,6 +134,10 @@ template<int x_row, int x_col>
 void Convolution<w_row, w_col, input, output, P, S, T>
 ::update_b(const Tensor3D<(x_row+2*P-w_row+S)/S, (x_col+2*P-w_col+S)/S, output, T>& delta,
            const Tensor3D<x_row, x_col, input, T>& x, const T& eps) {
+  /*
+    Argv 'x' is not used, but it is still need for infer template arguments.
+    Of couse, I know this is not a good implementation. I refactor this in the near future.
+  */
   Tensor1D<output, T> delta_b;
   delta_b.init();
   for (int i = 0; i < delta.shape()[2]; ++i)
@@ -190,7 +194,7 @@ void Pooling<k_row, k_col, P, S, T>
 template<int input, int output, typename T>
 class Affine {
 public:
-  Affine(const float low, const float high);
+  Affine(const float rate);
   void loadParams(CnnProto::Params* p, int idx);
   void saveParams(CnnProto::Params* p) const;
   void castParams();
@@ -207,8 +211,8 @@ private:
 };
 
 template<int input, int output, typename T>
-Affine<input, output, T>::Affine(const float low, const float high) {
-  w_.randomInit(low, high);
+Affine<input, output, T>::Affine(const float rate) {
+  w_.randomInit(rate);
   b_.init();
 }
 
@@ -261,6 +265,11 @@ template<int input, int output, typename T>
 void Affine<input, output, T>
 ::update_b(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
            const T& eps) {
+  /*
+    Argv 'x' is not need, but it is required in 'update_b' of Convolution Layer.
+    That's why I put 'x' as argv for the consistency.
+    When I refactor argv of Convolution Layer, I also fix this.
+  */
   Tensor1D<1, T> x_ones;
   x_ones[0] = 1;
   Tensor1D<output, T> db;

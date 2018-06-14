@@ -12,10 +12,10 @@ public:
   using Type = T;
   using InputType = Tensor3D<32, 32, 3, T>;
   using OutputType = Tensor1D<10, T>;
-  HintonCifar10() : Conv1(Convolution<5, 5, 3, 64, 2, 1, T>(-0.1, 0.1)),
-                    Conv2(Convolution<5, 5, 64, 64, 2, 1, T>(-0.1, 0.1)),
-                    Conv3(Convolution<5, 5, 64, 64, 2, 1, T>(-0.1, 0.1)),
-                    Affine1(Affine<3*3*64, 10, T>(-0.1, 0.1)) {};
+  HintonCifar10() : Conv1(Convolution<5, 5, 3, 64, 2, 1, T>(0.1)),
+                    Conv2(Convolution<5, 5, 64, 64, 2, 1, T>(0.1)),
+                    Conv3(Convolution<5, 5, 64, 64, 2, 1, T>(0.1)),
+                    Affine1(Affine<3*3*64, 10, T>(0.1)) {};
   void train(const InputType& x, const OutputType& t, const T& eps);
   unsigned long predict(const InputType& x) const;
   void save();
@@ -141,6 +141,7 @@ void HintonCifar10<T>::load() {
                      std::ios::in | std::ios::binary);
   if (!params.ParseFromIstream(&input)) {
     std::cerr << "Failed to load params." << std::endl;
+    exit(1);
   }
   Conv1.loadParams(&params, 0);
   Conv2.loadParams(&params, 1);

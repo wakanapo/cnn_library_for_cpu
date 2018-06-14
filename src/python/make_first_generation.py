@@ -1,7 +1,11 @@
-import sys
 from scipy.stats import norm
 import numpy as np
 import random
+import os
+pwd = os.getcwd()
+import sys
+sys.path.append(pwd+'/src/protos')
+import genom_pb2
 
 def make_normal(n):
     ranges = []
@@ -14,7 +18,7 @@ def make_normal(n):
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
 def make_linear(n):
-    return np.linspace(-1.0, 1.0, 2**n) * random.uniform(0.1, 1.0)
+    return np.linspace(-1.0, 1.0, 2**n) * random.uniform(0.1, 0.7)
 
 def make_log(n):
      ranges = np.concatenate((-1 * np.logspace(-1, 2.0, num=2**n),
@@ -28,24 +32,25 @@ def make_random(n):
     ranges /= abs(max(ranges, key=abs))
     return np.sort(ranges) * random.uniform(0.1, 0.7)
 
-def main(bit, genom_num):
-    genoms = [make_normal(bit), make_linear(bit), make_log(bit)]
-    for _ in range(genom_num-3):
-        genoms.append(make_random(bit))
+def main(bit, genom_num, filename, flag):
+    if flag == "random":
+        genes = []
+    else:
+        genes = [make_normal(bit), make_linear(bit), make_log(bit)]
+    for _ in range(genom_num - len(genes)):
+        genes.append(make_random(bit))
 
-    with open('src/ga/first_genoms.hpp', 'w') as f:
-        f.write("#pragma once\n")
-        f.write("#include <vector>\n\n")
-        f.write("std::vector<std::vector<float>> range = {{")
-        for i, genom in enumerate(genoms):
-            if i != 0:
-                f.write(", {")
-            for j, v in enumerate(genom):
-                if j != 0:
-                    f.write(", ")
-                f.write(str(v))
-            f.write("}")
-        f.write("};\n")
+    message = genom_pb2.Genoms();
+    for gene in genes:
+        genoms = message.genoms.add()
+        genoms.gene.extend(gene)
+
+    with open("{}/data/{}.pb".format(pwd, filename), "wb") as f:
+        f.write(message.SerializeToString())
 
 if __name__ =="__main__":
-    main(4, 3)
+    argv = sys.argv
+    if len(argv) != 5:
+        print("Usage: Python {} bit# genom# filename flag".format(argv[0]))
+        quit()
+    main(int(argv[1]), int(argv[2]), argv[3], argv[4])

@@ -19,6 +19,10 @@ namespace {
   std::string g_weights_input;
   std::string g_weights_output;
   std::string g_arithmatic_output;
+  float g_mutation_rate = 0.1;
+  float g_cross_rate = 0.5;
+  int g_max_generation = 30;
+  std::string g_first_genom_file;
 }  // namespace
 
 Type StringToType(std::string str) {
@@ -31,6 +35,10 @@ Type StringToType(std::string str) {
 
 int StringToInt(std::string str) {
   return std::stoi(str);
+}
+
+float StringToFloat(std::string str) {
+  return std::stof(str);
 }
 
 void SetFlag(std::string str, flags_type& flags) {
@@ -57,7 +65,8 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
     exit(1);
   }
 
-  std::string mode = argv[1];
+  std::string program = argv[0];
+  std::string mode = (program == "./bin/ga") ? "test" : argv[1];
   if (mode == "train") {
     g_train = true;
   } else if (mode == "test") {
@@ -66,6 +75,8 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
       exit(1);
     }
     g_train=false;
+    if (program == "./bin/ga")
+      g_first_genom_file = argv[1];
     g_weights_input = argv[2];
   } else {
     std::cerr << "Please set mode(train/test)." << std::endl;
@@ -73,22 +84,26 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
   }
   
   flags_type flags;
-  flags.insert(std::make_pair("type", [](std::string flag_value){
+  flags.insert(std::make_pair("type", [](std::string flag_value) {
         g_type = StringToType(flag_value);}));
-  flags.insert(std::make_pair("exponent", [](std::string flag_value){
+  flags.insert(std::make_pair("exponent", [](std::string flag_value) {
         g_expoent = StringToInt(flag_value);}));
-  flags.insert(std::make_pair("mantissa", [](std::string flag_value){
+  flags.insert(std::make_pair("mantissa", [](std::string flag_value) {
         g_mantissa = StringToInt(flag_value);}));
-  flags.insert(std::make_pair("weights_output", [](std::string flag_value){
+  flags.insert(std::make_pair("weights_output", [](std::string flag_value) {
         g_weights_output = flag_value;
         g_save_params = true; }));
-  flags.insert(std::make_pair("arithmatic_output", [](std::string flag_value){
+  flags.insert(std::make_pair("arithmatic_output", [](std::string flag_value) {
         g_arithmatic_output = flag_value;
         g_save_arithmetic = true; }));
-
-  for (int i = (g_train ? 2 : 3); i < argc; ++i) {
+  flags.insert(std::make_pair("cross_rate", [](std::string flag_value) {
+        g_cross_rate = StringToFloat(flag_value); }));
+  flags.insert(std::make_pair("mutation_rate", [](std::string flag_value) {
+        g_mutation_rate = StringToFloat(flag_value); }));
+  flags.insert(std::make_pair("max_generation", [](std::string flag_value) {
+        g_max_generation = StringToInt(flag_value);}));
+  for (int i = (mode == "train") ? 2 : 3; i < argc; ++i)
     SetFlag(argv[i], flags);
-  }
 }
 
 bool Options::IsTrain() {
@@ -125,4 +140,20 @@ std::string Options::GetWeightsOutput() {
 
 std::string Options::GetArithmaticOutput() {
   return g_arithmatic_output;
+}
+
+float Options::GetCrossRate() {
+  return g_cross_rate;
+}
+
+float Options::GetMutationRate() {
+  return g_mutation_rate;
+}
+
+int Options::GetMaxGeneration() {
+  return g_max_generation;
+}
+
+std::string Options::GetFirstGenomFile() {
+  return g_first_genom_file;
 }

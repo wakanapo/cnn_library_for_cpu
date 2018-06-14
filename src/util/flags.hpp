@@ -20,4 +20,8 @@ public:
   static std::string GetWeightsInput();
   static std::string GetWeightsOutput();
   static std::string GetArithmaticOutput();
+  static float GetCrossRate();
+  static float GetMutationRate();
+  static int GetMaxGeneration();
+  static std::string GetFirstGenomFile();
 };
