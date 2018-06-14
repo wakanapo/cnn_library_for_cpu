@@ -51,6 +51,12 @@ GeneticAlgorithm GeneticAlgorithm::setup() {
   GeneticAlgorithm ga(genes.genoms(0).gene_size(), genes.genoms_size(),
                       Options::GetCrossRate(),Options::GetMutationRate(),
                       Options::GetMaxGeneration());
+  std::cerr << coloringText("Gene Length: " +
+                            std::to_string(genes.genoms(0).gene_size()), BLUE)
+            << coloringText(", Genom Num: " +
+                            std::to_string(genes.genoms_size()), BLUE)
+            << std::endl;
+  
   std::vector<Genom> genoms;
   for (int i = 0; i < genes.genoms_size(); ++i) {
     std::vector<float> gene;
