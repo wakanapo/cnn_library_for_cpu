@@ -212,6 +212,11 @@ void GeneticAlgorithm::save(std::string filename) {
     std::cerr << "Failed to save genoms." << std::endl;
 }
 
+void calculateEvaluation(const Model& model, const Dataset<Model::InputType, Model::OutputType>& test, Genom* genom) {
+  GlobalParams::setParams(genom->getGenom());
+  genom->executeEvaluation(model, test);
+}
+
 void GeneticAlgorithm::run(std::string filepath) {
   Timer timer;
   Model model;
@@ -231,10 +236,8 @@ void GeneticAlgorithm::run(std::string filepath) {
     std::cerr << "Evaluating genoms ..... ";
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread([&, genom]() mutable {
-              GlobalParams::setParams(genom.getGenom());
-              genom.executeEvaluation(model, test);
-            }));
+        threads.push_back(std::thread(calculateEvaluation, std::ref(model),
+                                      std::ref(test), &genom));
       }
     }
     for (std::thread& th : threads) {
