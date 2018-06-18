@@ -12,7 +12,6 @@
 #include <thread>
 #include <vector>
 
-#include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
 #include "util/color.hpp"
@@ -22,9 +21,6 @@
 #include "ga/set_gene.hpp"
 #include "protos/genom.pb.h"
 
-using Model = HintonCifar10<float>;
-
-template<typename Model>
 void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
                               typename Model::OutputType> test) {
   model.cast();
