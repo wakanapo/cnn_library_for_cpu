@@ -209,7 +209,7 @@ void Function::max_pool(const Tensor<dim1, dim2, dim3, dim4, dim5, T>& t,
                         int k_row, int k_col,
                         Tensor<a_row, a_col, dim3, dim4, dim5, T>* ans,
                         Tensor<a_row*a_col*dim3*dim4*dim5, 1, 1, 1, 1, int>* idx,
-                        int p, int s) {
+                        int /* p */, int s) {
   // TODO: Corresponding p > 0 case.
   Shape ans_dim = ans->shape();
   Shape dim = t.shape();
