@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include <iostream>
+#include <memory>
 
 #include "util/layers.hpp"
 #include "util/read_data.hpp"
@@ -86,34 +87,34 @@ void HintonCifar10<T>::train(const typename HintonCifar10<T>::InputType& x,
 
 template<typename T>
 unsigned long HintonCifar10<T>::predict(const typename HintonCifar10<T>::InputType & x) const {
-  Tensor3D<32, 32, 64, T> conv1_ans;
-  Conv1.forward(x, &conv1_ans);
-  Tensor3D<15, 15, 64, T> pool1_ans;
-  Tensor1D<15*15*64, int> idx1;
-  Pool1.forward(conv1_ans, &pool1_ans, &idx1);
+  auto conv1_ans = std::make_unique<Tensor3D<32, 32, 64, T>>();
+  Conv1.forward(x, conv1_ans.get());
+  auto pool1_ans = std::make_unique<Tensor3D<15, 15, 64, T>>();
+  auto idx1 = std::make_unique<Tensor1D<15*15*64, int>>();
+  Pool1.forward(*conv1_ans, pool1_ans.get(), idx1.get());
 
-  Tensor3D<15, 15, 64, T> conv2_ans;
-  Conv2.forward(pool1_ans, &conv2_ans);
-  Tensor3D<7, 7, 64, T> pool2_ans;
-  Tensor1D<7*7*64, int> idx2;
-  Pool2.forward(conv2_ans, &pool2_ans, &idx2);
+  auto conv2_ans = std::make_unique<Tensor3D<15, 15, 64, T>>();
+  Conv2.forward(*pool1_ans, conv2_ans.get());
+  auto pool2_ans = std::make_unique<Tensor3D<7, 7, 64, T>>();
+  auto idx2 = std::make_unique<Tensor1D<7*7*64, int>>();
+  Pool2.forward(*conv2_ans, pool2_ans.get(), idx2.get());
 
-  Tensor3D<7, 7, 64, T> conv3_ans;
-  Conv3.forward(pool2_ans, &conv3_ans);
-  Tensor3D<3, 3, 64, T> pool3_ans;
-  Tensor1D<3*3*64, int> idx3;
-  Pool3.forward(conv3_ans, &pool3_ans, &idx3);
+  auto conv3_ans = std::make_unique<Tensor3D<7, 7, 64, T>>();
+  Conv3.forward(*pool2_ans, conv3_ans.get());
+  auto pool3_ans = std::make_unique<Tensor3D<3, 3, 64, T>>();
+  auto idx3 = std::make_unique<Tensor1D<3*3*64, int>>();
+  Pool3.forward(*conv3_ans, pool3_ans.get(), idx3.get());
 
-  Tensor1D<3*3*64, T> dense1 = pool3_ans.flatten();
-  Tensor1D<10, T> ans;
-  Affine1.forward(dense1, &ans);
-  Last.forward(&ans);
+  auto dense1 = std::make_unique<Tensor1D<3*3*64, T>>(pool3_ans->flatten());
+  auto ans = std::make_unique<Tensor1D<10, T>>();
+  Affine1.forward(*dense1, ans.get());
+  Last.forward(ans.get());
 
   T max = (T)0;
   unsigned long argmax = 0;
   for (int i = 0; i < 10; ++i) {
-    if (ans[i] > max) {
-      max = ans[i];
+    if ((*ans)[i] > max) {
+      max = (*ans)[i];
       argmax = i;
     }
   }

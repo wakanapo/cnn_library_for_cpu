@@ -66,7 +66,7 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
   }
 
   std::string program = argv[0];
-  std::string mode = (program == "./bin/ga") ? "test" : argv[1];
+  std::string mode = (program != "./bin/cnn") ? "test" : argv[1];
   if (mode == "train") {
     g_train = true;
   } else if (mode == "test") {
@@ -75,7 +75,7 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
       exit(1);
     }
     g_train=false;
-    if (program == "./bin/ga")
+    if (program != "./bin/cnn")
       g_first_genom_file = argv[1];
     g_weights_input = argv[2];
   } else {

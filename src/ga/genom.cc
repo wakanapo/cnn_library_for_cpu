@@ -12,7 +12,6 @@
 #include <thread>
 #include <vector>
 
-#include "cnn/hinton_cifar10.hpp"
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
 #include "util/color.hpp"
@@ -22,9 +21,6 @@
 #include "ga/set_gene.hpp"
 #include "protos/genom.pb.h"
 
-using Model = HintonCifar10<float>;
-
-template<typename Model>
 void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
                               typename Model::OutputType> test) {
   model.cast();
@@ -91,6 +87,8 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
       std::swap(*inc_itr, genom_one[center+i]);
       ++inc_itr;
     }
+
+    // i = 0 の時こちらもgenom_one[center]とswapしてしまうので i = 0は除外
     if (i != 0 && dic_itr >= genom_two.begin()) {
       std::swap(*dic_itr, genom_one[center-i]);
       --dic_itr;
@@ -212,6 +210,12 @@ void GeneticAlgorithm::save(std::string filename) {
     std::cerr << "Failed to save genoms." << std::endl;
 }
 
+void calculateEvaluation(const Model& model, const Dataset<Model::InputType, Model::OutputType>& test, Genom* genom) {
+  GlobalParams::setParams(genom->getGenom());
+  auto m = std::make_unique<Model>(model);
+  genom->executeEvaluation(*m, test);
+}
+
 void GeneticAlgorithm::run(std::string filepath) {
   Timer timer;
   Model model;
@@ -231,10 +235,8 @@ void GeneticAlgorithm::run(std::string filepath) {
     std::cerr << "Evaluating genoms ..... ";
     for (auto& genom: genoms_) {
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread([&genom, &test, model] {
-              GlobalParams::setParams(genom.getGenom());
-              genom.executeEvaluation(model, test);
-            }));
+        threads.push_back(std::thread(calculateEvaluation, std::ref(model),
+                                      std::ref(test), &genom));
       }
     }
     for (std::thread& th : threads) {

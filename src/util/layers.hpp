@@ -133,7 +133,7 @@ template<int w_row, int w_col, int input, int output, int P, int S, typename T>
 template<int x_row, int x_col>
 void Convolution<w_row, w_col, input, output, P, S, T>
 ::update_b(const Tensor3D<(x_row+2*P-w_row+S)/S, (x_col+2*P-w_col+S)/S, output, T>& delta,
-           const Tensor3D<x_row, x_col, input, T>& x, const T& eps) {
+           const Tensor3D<x_row, x_col, input, T>& /* x */, const T& eps) {
   /*
     Argv 'x' is not used, but it is still need for infer template arguments.
     Of couse, I know this is not a good implementation. I refactor this in the near future.
@@ -263,7 +263,7 @@ void Affine<input, output, T>
 
 template<int input, int output, typename T>
 void Affine<input, output, T>
-::update_b(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& x,
+::update_b(const Tensor1D<output, T>& delta, const Tensor1D<input, T>& /* x */,
            const T& eps) {
   /*
     Argv 'x' is not need, but it is required in 'update_b' of Convolution Layer.
