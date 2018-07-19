@@ -23,6 +23,8 @@
 
 void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
                               typename Model::OutputType> test) {
+  evaluation_ = 1;
+  return;
   model.cast();
 
   int cnt = 0;
@@ -36,30 +38,32 @@ void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
 }
 
 GeneticAlgorithm GeneticAlgorithm::setup() {
-  Gene::Genoms genes;
+  GenomEvaluation::Generation generation;
   std::fstream input(Options::GetFirstGenomFile(),
                      std::ios::in | std::ios::binary);
-  if (!genes.ParseFromIstream(&input)) {
+  if (!generation.ParseFromIstream(&input)) {
     std::cerr << "Cannot load first genoms." << std::endl;
     exit(1);
   }
 
-  GeneticAlgorithm ga(genes.genoms(0).gene_size(), genes.genoms_size(),
+  GeneticAlgorithm ga(generation.individuals(0).genom().gene_size() ,
+                      generation.individuals_size(),
                       Options::GetCrossRate(),Options::GetMutationRate(),
                       Options::GetMaxGeneration());
   std::cerr << coloringText("Gene Length: " +
-                            std::to_string(genes.genoms(0).gene_size()), BLUE)
+                            std::to_string(generation.individuals(0).
+                                           genom().gene_size()), BLUE)
             << coloringText(", Genom Num: " +
-                            std::to_string(genes.genoms_size()), BLUE)
+                            std::to_string(generation.individuals_size()), BLUE)
             << std::endl;
   
   std::vector<Genom> genoms;
-  for (int i = 0; i < genes.genoms_size(); ++i) {
+  for (int i = 0; i < generation.individuals_size(); ++i) {
     std::vector<float> gene;
-    for (int j = 0; j < genes.genoms(i).gene_size(); ++j) {
-      gene.push_back(genes.genoms(i).gene(j));
+    for (int j = 0; j < generation.individuals(0).genom().gene_size(); ++j) {
+      gene.push_back(generation.individuals(i).genom().gene(j));
     }
-    genoms.push_back({gene, genes.genoms(i).evaluation()});
+    genoms.push_back({gene, generation.individuals(i).evaluation()});
   }
   ga.moveGenoms(std::move(genoms));
   return ga;
@@ -195,12 +199,14 @@ void GeneticAlgorithm::print(int i) {
 }
 
 void GeneticAlgorithm::save(std::string filename) {
-  Gene::Genoms gs;
+  GenomEvaluation::Generation gs;
   for (auto genom : genoms_) {
-    Gene::Gene* g = gs.add_genoms();
+    GenomEvaluation::Individual* g = gs.add_individuals();
+    GenomEvaluation::Genom* genes = new GenomEvaluation::Genom();
     for (auto gene : genom.getGenom()) {
-      g->mutable_gene()->Add(gene);
+      genes->mutable_gene()->Add(gene);
     }
+    g->set_allocated_genom(genes);
     g->set_evaluation(genom.getEvaluation());
   }
 
