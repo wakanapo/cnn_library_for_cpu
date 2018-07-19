@@ -87,6 +87,8 @@ std::vector<Genom> GeneticAlgorithm::crossover(const Genom& parent) const {
       std::swap(*inc_itr, genom_one[center+i]);
       ++inc_itr;
     }
+
+    // i = 0 の時こちらもgenom_one[center]とswapしてしまうので i = 0は除外
     if (i != 0 && dic_itr >= genom_two.begin()) {
       std::swap(*dic_itr, genom_one[center-i]);
       --dic_itr;
