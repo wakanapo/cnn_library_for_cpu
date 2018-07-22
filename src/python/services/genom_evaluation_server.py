@@ -1,9 +1,14 @@
 from concurrent import futures
+import time
+import os
+pwd = os.getcwd()
 import sys
-sys.path.append('../protos/')
+sys.path.append(pwd+'/src/protos')
 import genom_pb2
 import genom_pb2_grpc
 import grpc
+
+_ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 def calculate_fitness(genom):
     # 適応度を計算する処理
@@ -11,8 +16,8 @@ def calculate_fitness(genom):
     return fitness
 
 class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
-    def GetIndividualWithEvaluation(self, request, context):
-        return genom_pb2.Genom(genom=request,
+    def GetIndividual(self, request, context):
+        return genom_pb2.Individual(genom=request,
                                evaluation=calculate_fitness(request))
 
 def serve():
@@ -21,6 +26,11 @@ def serve():
         GenomEvaluationServicer(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
+    try:
+        while True:
+            time.sleep(_ONE_DAY_IN_SECONDS)
+    except KeyboardInterrupt:
+        server.stop(0)
 
 if __name__=='__main__':
     serve()

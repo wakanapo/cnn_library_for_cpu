@@ -45,9 +45,10 @@ x_test = x_test.astype('float32')
 x_train /= 255
 x_test /= 255
 
-model.fit(x_train, y_train, batch_size=1, epochs=10, validation_data=(x_test, y_test), shuffle=True)
+model.fit(x_train, y_train, batch_size=100, epochs=10, validation_data=(x_test, y_test), shuffle=True)
 
 model.save("../../data/vgg_like_models")
+model.save_weights("../../data/vgg_like_params.h5")
 scores = model.evaluate(x_test, y_test, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])

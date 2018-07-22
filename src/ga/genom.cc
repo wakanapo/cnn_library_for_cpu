@@ -12,6 +12,12 @@
 #include <thread>
 #include <vector>
 
+#include <grpc/grpc.h>
+#include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
+
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
 #include "util/color.hpp"
@@ -19,7 +25,9 @@
 #include "util/read_data.hpp"
 #include "util/timer.hpp"
 #include "ga/set_gene.hpp"
+#include "ga/evaluate_server.hpp"
 #include "protos/genom.pb.h"
+#include "protos/genom.grpc.pb.h"
 
 void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
                               typename Model::OutputType> test) {
@@ -235,18 +243,37 @@ void GeneticAlgorithm::run(std::string filepath) {
       nextGenerationGeneCreate();
       std::cerr << coloringText("OK!", GREEN) << std::endl;
     }
-    
-    std::vector<std::thread> threads;
-    /* 各遺伝子の評価*/
-    std::cerr << "Evaluating genoms ..... ";
-    for (auto& genom: genoms_) {
-      if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread(calculateEvaluation, std::ref(model),
-                                      std::ref(test), &genom));
+
+    if (Options::UseServerEnable()) {
+      GenomEvaluationClient client(
+          grpc::CreateChannel("localhost:50051",
+                              grpc::InsecureChannelCredentials()));
+      std::cerr << "Evaluating genoms on server ..... ";
+      for (int i = 0; i < (int)genoms_.size(); ++i) {
+        auto& genom = genoms_[i];
+        if (genom.getEvaluation() <= 0) {
+          GenomEvaluation::Individual individual;
+          GenomEvaluation::Genom* genes = new GenomEvaluation::Genom();
+          for (auto gene : genom.getGenom()) {
+            genes->mutable_gene()->Add(gene);
+          }
+          client.GetIndividualWithEvaluation(*genes, &individual);
+          genom.setEvaluation(individual.evaluation());
+        }
       }
-    }
-    for (std::thread& th : threads) {
-      th.join();
+    } else {
+      std::vector<std::thread> threads;
+      /* 各遺伝子の評価*/
+      std::cerr << "Evaluating genoms ..... ";
+      for (auto& genom: genoms_) {
+        if (genom.getEvaluation() <= 0) {
+          threads.push_back(std::thread(calculateEvaluation, std::ref(model),
+                                        std::ref(test), &genom));
+        }
+      }
+      for (std::thread& th : threads) {
+        th.join();
+      }
     }
     std::cerr << coloringText("OK!", GREEN) << std::endl;
 

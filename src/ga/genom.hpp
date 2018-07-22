@@ -16,6 +16,7 @@ public:
   void setGenom(std::vector<float> genom_list) { genom_list_ = genom_list; };
   void executeEvaluation(Model model, Dataset<typename Model::InputType,
                          typename Model::OutputType> test);
+  void setEvaluation(float evaluation) { evaluation_ = evaluation; };
 private:
   std::vector<float> genom_list_;
   float evaluation_;
