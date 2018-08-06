@@ -23,7 +23,7 @@ def converter(partition):
     return f
 
 def calculate_fitness(genom):
-    print("data load: success.")
+    print("start evaluation!")
     model = VGG16(include_top=True, weights='imagenet',
                   input_tensor=None, input_shape=None)
     print("model load: success.")
@@ -43,6 +43,7 @@ class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
 def serve():
     global val_X, val_y
     val_X, val_y = imagenet.load()
+    print("data load: success.")
     server = grpc.server(futures.ThreadPoolExecutor())
     genom_pb2_grpc.add_GenomEvaluationServicer_to_server(
         GenomEvaluationServicer(), server)
