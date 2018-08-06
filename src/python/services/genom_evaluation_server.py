@@ -20,12 +20,16 @@ def converter(partition):
 
 def calculate_fitness(genom):
     val_X, val_y = imagenet.load()
+    print("data load: success.")
     model = VGG16(include_top=True, weights='imagenet',
                   input_tensor=None, input_shape=None)
+    print("model load: success.")
     W = model.get_weights()
     W_q = np.frompyfunc(converter(genom.gene), 1, 1)(W)
+    print("quantize: success.")
     model.set_weights(W_q)
     score = model.evaluate(x=val_X, y=val_y)
+    print("evaluate: success.")
     return score[1]
 
 class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
