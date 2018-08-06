@@ -29,22 +29,6 @@
 #include "protos/genom.pb.h"
 #include "protos/genom.grpc.pb.h"
 
-void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
-                              typename Model::OutputType> test) {
-  evaluation_ = 1;
-  return;
-  model.cast();
-
-  int cnt = 0;
-  for (int i = 0; i < 4096; ++i) {
-    unsigned long y = model.predict(test.images[i]);
-    if (OneHot<typename Model::OutputType>(y) == test.labels[i])
-      ++cnt;
-  }
-
-  evaluation_ = (float)cnt / (float)4096;
-}
-
 GeneticAlgorithm GeneticAlgorithm::setup() {
   GenomEvaluation::Generation generation;
   std::fstream input(Options::GetFirstGenomFile(),
@@ -224,17 +208,8 @@ void GeneticAlgorithm::save(std::string filename) {
     std::cerr << "Failed to save genoms." << std::endl;
 }
 
-void calculateEvaluation(const Model& model, const Dataset<Model::InputType, Model::OutputType>& test, Genom* genom) {
-  GlobalParams::setParams(genom->getGenom());
-  auto m = make_unique<Model>(model);
-  genom->executeEvaluation(*m, test);
-}
-
 void GeneticAlgorithm::run(std::string filepath) {
   Timer timer;
-  Model model;
-  auto test = model.readData(TEST);
-  model.load();
   for (int i = 0; i < max_generation_; ++i) {
     timer.start();
     if (i != 0) {
@@ -244,35 +219,20 @@ void GeneticAlgorithm::run(std::string filepath) {
       std::cerr << coloringText("OK!", GREEN) << std::endl;
     }
 
-    if (Options::UseServerEnable()) {
-      GenomEvaluationClient client(
-          grpc::CreateChannel("localhost:50051",
-                              grpc::InsecureChannelCredentials()));
-      std::cerr << "Evaluating genoms on server ..... ";
-      for (int i = 0; i < (int)genoms_.size(); ++i) {
-        auto& genom = genoms_[i];
-        if (genom.getEvaluation() <= 0) {
-          GenomEvaluation::Individual individual;
-          GenomEvaluation::Genom* genes = new GenomEvaluation::Genom();
-          for (auto gene : genom.getGenom()) {
-            genes->mutable_gene()->Add(gene);
-          }
-          client.GetIndividualWithEvaluation(*genes, &individual);
-          genom.setEvaluation(individual.evaluation());
+    GenomEvaluationClient client(
+      grpc::CreateChannel("localhost:50051",
+                          grpc::InsecureChannelCredentials()));
+    std::cerr << "Evaluating genoms on server ..... ";
+    for (int i = 0; i < (int)genoms_.size(); ++i) {
+      auto& genom = genoms_[i];
+      if (genom.getEvaluation() <= 0) {
+        GenomEvaluation::Individual individual;
+        GenomEvaluation::Genom* genes = new GenomEvaluation::Genom();
+        for (auto gene : genom.getGenom()) {
+          genes->mutable_gene()->Add(gene);
         }
-      }
-    } else {
-      std::vector<std::thread> threads;
-      /* 各遺伝子の評価*/
-      std::cerr << "Evaluating genoms ..... ";
-      for (auto& genom: genoms_) {
-        if (genom.getEvaluation() <= 0) {
-          threads.push_back(std::thread(calculateEvaluation, std::ref(model),
-                                        std::ref(test), &genom));
-        }
-      }
-      for (std::thread& th : threads) {
-        th.join();
+        client.GetIndividualWithEvaluation(*genes, &individual);
+        genom.setEvaluation(individual.evaluation());
       }
     }
     std::cerr << coloringText("OK!", GREEN) << std::endl;

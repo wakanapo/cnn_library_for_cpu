@@ -24,5 +24,4 @@ public:
   static float GetMutationRate();
   static int GetMaxGeneration();
   static std::string GetFirstGenomFile();
-  static bool UseServerEnable();
 };

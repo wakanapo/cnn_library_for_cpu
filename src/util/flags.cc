@@ -23,7 +23,6 @@ namespace {
   float g_cross_rate = 0.5;
   int g_max_generation = 30;
   std::string g_first_genom_file;
-  bool g_use_server = true;
 }  // namespace
 
 Type StringToType(std::string str) {
@@ -111,8 +110,6 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
         g_mutation_rate = StringToFloat(flag_value); }));
   flags.insert(std::make_pair("max_generation", [](std::string flag_value) {
         g_max_generation = StringToInt(flag_value);}));
-  flags.insert(std::make_pair("use_server", [](std::string flag_value) {
-        g_use_server = StringToBool(flag_value);}));
   for (int i = (mode == "test") ? 3 : 2; i < argc; ++i)
     SetFlag(argv[i], flags);
 }
@@ -167,8 +164,4 @@ int Options::GetMaxGeneration() {
 
 std::string Options::GetFirstGenomFile() {
   return g_first_genom_file;
-}
-
-bool Options::UseServerEnable() {
-  return g_use_server;
 }
