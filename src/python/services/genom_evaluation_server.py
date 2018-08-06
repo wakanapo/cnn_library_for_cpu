@@ -27,7 +27,9 @@ def calculate_fitness(genom):
     model = VGG16(weights='imagenet')
     print("model load: success.")
     W = model.get_weights()
-    W_q = np.vectorize(converter(genom.gene))(W)
+    shape = W.shape
+    W_q = np.vectorize(converter(genom.gene))(W.flatten())
+    w_q.reshape(shape)
     print("quantize: success.")
     model.set_weights(W_q)
     score = model.evaluate(x=val_X, y=val_y)
