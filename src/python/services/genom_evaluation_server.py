@@ -7,13 +7,26 @@ sys.path.append(pwd+'/src/protos')
 import genom_pb2
 import genom_pb2_grpc
 import grpc
+from keras.applications.vgg16 import VGG16
+import imagenet
+from quantize import VBQ
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
+def converter(partition):
+    def f(val):
+        return VBQ(val, partition).to_float()
+    return f
+
 def calculate_fitness(genom):
-    # 適応度を計算する処理
-    fitness = 0.5
-    return fitness
+    val_X, val_y = imagenet.load()
+    model = VGG16(include_top=True, weights='imagenet',
+                  input_tensor=None, input_shape=None)
+    W = model.get_weights()
+    W_q = np.frompyfunc(converter(genom.gene), 1, 1)(W)
+    model.set_weights(W_q)
+    score = model.evaluate(x=val_X, y=val_y)
+    return score[1]
 
 class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
     def GetIndividual(self, request, context):

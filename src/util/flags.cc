@@ -74,7 +74,7 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
   }
 
   std::string program = argv[0];
-  std::string mode = (program != "./bin/cnn") ? "test" : argv[1];
+  std::string mode = (program != "./bin/cnn") ? "ga" : argv[1];
   if (mode == "train") {
     g_train = true;
   } else if (mode == "test") {
@@ -83,9 +83,10 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
       exit(1);
     }
     g_train=false;
-    if (program != "./bin/cnn")
-      g_first_genom_file = argv[1];
     g_weights_input = argv[2];
+  } else if (mode == "ga") {
+    g_train=false;
+    g_first_genom_file = argv[1];
   } else {
     std::cerr << "Please set mode(train/test)." << std::endl;
     exit(1);
@@ -112,7 +113,7 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
         g_max_generation = StringToInt(flag_value);}));
   flags.insert(std::make_pair("use_server", [](std::string flag_value) {
         g_use_server = StringToBool(flag_value);}));
-  for (int i = (mode == "train") ? 2 : 3; i < argc; ++i)
+  for (int i = (mode == "test") ? 3 : 2; i < argc; ++i)
     SetFlag(argv[i], flags);
 }
 

@@ -298,8 +298,8 @@ std::string timestamp() {
 }
 
 int main(int argc, char* argv[]) {
-  if (argc < 3) {
-    std::cerr << "Usage: ./bin/ga first_genom_file  input_file" << std::endl;
+  if (argc < 2) {
+    std::cerr << "Usage: ./bin/ga first_genom_file" << std::endl;
     return 1;
   }
   Options::ParseCommandLine(argc, argv);
