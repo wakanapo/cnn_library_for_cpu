@@ -1,5 +1,11 @@
+import os
 import numpy as np
-from keras.preprocessing.image import img_to_array, list_pictures, load_img
+from keras.preprocessing.image import img_to_array, load_img
+
+def list_pictures(directory, ext='JPEG|jpg|jpeg|bmp|png|ppm'):
+    return [os.path.join(root, f)
+            for root, _, files in os.walk(directory) for f in files
+            if re.match(r'([\w]+\.(?:' + ext + '))', f.lower())]
 
 def load():
     with open("data/ILSVRC2012/ILSVRC2012_devkit_t12/\
