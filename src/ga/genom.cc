@@ -226,7 +226,7 @@ void GeneticAlgorithm::save(std::string filename) {
 
 void calculateEvaluation(const Model& model, const Dataset<Model::InputType, Model::OutputType>& test, Genom* genom) {
   GlobalParams::setParams(genom->getGenom());
-  auto m = std::make_unique<Model>(model);
+  auto m = make_unique<Model>(model);
   genom->executeEvaluation(*m, test);
 }
 

@@ -7,6 +7,11 @@
 #include "util/read_data.hpp"
 #include "util/tensor.hpp"
 
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
 template<typename T>
 class HintonCifar10 {
 public:
@@ -87,26 +92,26 @@ void HintonCifar10<T>::train(const typename HintonCifar10<T>::InputType& x,
 
 template<typename T>
 unsigned long HintonCifar10<T>::predict(const typename HintonCifar10<T>::InputType & x) const {
-  auto conv1_ans = std::make_unique<Tensor3D<32, 32, 64, T>>();
+  auto conv1_ans = make_unique<Tensor3D<32, 32, 64, T>>();
   Conv1.forward(x, conv1_ans.get());
-  auto pool1_ans = std::make_unique<Tensor3D<15, 15, 64, T>>();
-  auto idx1 = std::make_unique<Tensor1D<15*15*64, int>>();
+  auto pool1_ans = make_unique<Tensor3D<15, 15, 64, T>>();
+  auto idx1 = make_unique<Tensor1D<15*15*64, int>>();
   Pool1.forward(*conv1_ans, pool1_ans.get(), idx1.get());
 
-  auto conv2_ans = std::make_unique<Tensor3D<15, 15, 64, T>>();
+  auto conv2_ans = make_unique<Tensor3D<15, 15, 64, T>>();
   Conv2.forward(*pool1_ans, conv2_ans.get());
-  auto pool2_ans = std::make_unique<Tensor3D<7, 7, 64, T>>();
-  auto idx2 = std::make_unique<Tensor1D<7*7*64, int>>();
+  auto pool2_ans = make_unique<Tensor3D<7, 7, 64, T>>();
+  auto idx2 = make_unique<Tensor1D<7*7*64, int>>();
   Pool2.forward(*conv2_ans, pool2_ans.get(), idx2.get());
 
-  auto conv3_ans = std::make_unique<Tensor3D<7, 7, 64, T>>();
+  auto conv3_ans = make_unique<Tensor3D<7, 7, 64, T>>();
   Conv3.forward(*pool2_ans, conv3_ans.get());
-  auto pool3_ans = std::make_unique<Tensor3D<3, 3, 64, T>>();
-  auto idx3 = std::make_unique<Tensor1D<3*3*64, int>>();
+  auto pool3_ans = make_unique<Tensor3D<3, 3, 64, T>>();
+  auto idx3 = make_unique<Tensor1D<3*3*64, int>>();
   Pool3.forward(*conv3_ans, pool3_ans.get(), idx3.get());
 
-  auto dense1 = std::make_unique<Tensor1D<3*3*64, T>>(pool3_ans->flatten());
-  auto ans = std::make_unique<Tensor1D<10, T>>();
+  auto dense1 = make_unique<Tensor1D<3*3*64, T>>(pool3_ans->flatten());
+  auto ans = make_unique<Tensor1D<10, T>>();
   Affine1.forward(*dense1, ans.get());
   Last.forward(ans.get());
 
