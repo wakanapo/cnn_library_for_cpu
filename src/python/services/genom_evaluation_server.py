@@ -8,10 +8,14 @@ import genom_pb2
 import genom_pb2_grpc
 import grpc
 from keras.applications.vgg16 import VGG16
+import numpy as np
+
 import imagenet
 from quantize import VBQ
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
+val_X = []
+val_y = []
 
 def converter(partition):
     def f(val):
@@ -19,7 +23,6 @@ def converter(partition):
     return f
 
 def calculate_fitness(genom):
-    val_X, val_y = imagenet.load()
     print("data load: success.")
     model = VGG16(include_top=True, weights='imagenet',
                   input_tensor=None, input_shape=None)
@@ -38,6 +41,8 @@ class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
                                evaluation=calculate_fitness(request))
 
 def serve():
+    global val_X, val_y
+    val_X, val_y = imagenet.load()
     server = grpc.server(futures.ThreadPoolExecutor())
     genom_pb2_grpc.add_GenomEvaluationServicer_to_server(
         GenomEvaluationServicer(), server)
