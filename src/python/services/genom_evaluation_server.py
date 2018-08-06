@@ -24,8 +24,7 @@ def converter(partition):
 
 def calculate_fitness(genom):
     print("start evaluation!")
-    model = VGG16(include_top=True, weights='imagenet',
-                  input_tensor=None, input_shape=None)
+    model = VGG16(weights='imagenet')
     print("model load: success.")
     W = model.get_weights()
     W_q = np.frompyfunc(converter(genom.gene), 1, 1)(W)
