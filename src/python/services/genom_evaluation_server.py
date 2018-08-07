@@ -18,18 +18,25 @@ val_X = []
 val_y = []
 
 def converter(partition):
-    def f(val):
-        return VBQ(val, partition).to_float()
+    def f(arr):
+        for i in range(len(partition)-1):
+            arr[(arr > partition[i]) & (arr <= partition[i+1])] = (partition[i] + partition[i + 1]) /  2
+        arr[arr < partition[0]] = partition[0]
+        arr[arr > partition[len(arr) - 1]] = partition[len(arr) - 1]
     return f
+
 
 def calculate_fitness(genom):
     print("start evaluation!")
     model = VGG16(weights='imagenet')
     print("model load: success.")
     W = model.get_weights()
-    W_q = list(map(lambda x: np.vectorize(converter(genom.gene))(x), W))
+    W_q = list(map(converter(genom.gene), W))
     print("quantize: success.")
     model.set_weights(W_q)
+    model.compile(optimizer='sgd',
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
     score = model.evaluate(x=val_X, y=val_y)
     print("evaluate: success.")
     return score[1]
