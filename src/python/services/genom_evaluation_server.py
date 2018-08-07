@@ -7,7 +7,8 @@ sys.path.append(pwd+'/src/protos')
 import genom_pb2
 import genom_pb2_grpc
 import grpc
-from keras.applications.vgg16 import VGG16
+from keras.applications.vgg16 import VGG16, preprocess_input
+from keras import backend as K
 import numpy as np
 
 import imagenet
@@ -29,6 +30,7 @@ def converter(partition):
 
 
 def calculate_fitness(genom):
+    K.clear_session()
     print("start evaluation!")
     model = VGG16(weights='imagenet')
     print("model load: success.")
@@ -39,9 +41,11 @@ def calculate_fitness(genom):
     model.compile(optimizer='sgd',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
-    score = model.evaluate(x=val_X, y=val_y)
+    predict = model.predict(preprocess_input(val_X))
+    predict = np.argmax(predict, axis=1)
+    print(predict[:5])
     print("evaluate: success.")
-    return score[1]
+    return np.sum(val_y == predict) / len(val_y)
 
 class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
     def GetIndividual(self, request, context):
