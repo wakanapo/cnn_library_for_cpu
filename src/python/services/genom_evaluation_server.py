@@ -19,10 +19,12 @@ val_y = []
 
 def converter(partition):
     def f(arr):
+        arr = np.asarray(arr)
         for i in range(len(partition)-1):
             arr[(arr > partition[i]) & (arr <= partition[i+1])] = (partition[i] + partition[i + 1]) /  2
         arr[arr < partition[0]] = partition[0]
         arr[arr > partition[len(arr) - 1]] = partition[len(arr) - 1]
+        return arr
     return f
 
 
