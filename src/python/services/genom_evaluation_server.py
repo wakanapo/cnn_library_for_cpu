@@ -32,10 +32,10 @@ def converter(partition):
 
 
 def calculate_fitness(genom):
-    K.clear_session()
+#     K.clear_session()
     print("start evaluation!")
 #     model = VGG16(weights='imagenet')
-    model = cifar10.build_hinton_model(x_train.shape[1:])
+    model = cifar10.build_hinton_model(val_X.shape[1:])
     model.load_weights('data/hinton.h5')
     print("model load: success.")
 #     W = model.get_weights()
@@ -45,8 +45,7 @@ def calculate_fitness(genom):
 #     model.compile(optimizer=optimizers.Adam(),
 #                   loss='categorical_crossentropy',
 #                   metrics=['accuracy'])
-    predict = model.predict(preprocess_input(val_X))
-    predict = np.argmax(predict, axis=1)
+    predict = model.predict(val_X)
     print("predict: ", predict[:5])
     print("labels: ", val_y[:5])
     print(val_y[:5]==predict[:5])
