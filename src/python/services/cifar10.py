@@ -18,7 +18,7 @@ def build_hinton_model(input_shape):
     model.add(Activation('sigmoid'))
     return model
 
-def run(build_model):
+def read_data():
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     y_train = utils.to_categorical(y_train, 10)
     y_test = utils.to_categorical(y_test, 10)
@@ -26,6 +26,10 @@ def run(build_model):
     x_test = x_test.astype('float32')
     x_train /= 255
     x_test /= 255
+    return x_train, y_train, x_test, y_test
+
+def run(build_model):
+    x_train, y_train, x_test, y_test = read_cifar10_data()
     
     model = build_model(x_train.shape[1:])
     model.summary()

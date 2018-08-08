@@ -9,8 +9,10 @@ import genom_pb2_grpc
 import grpc
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras import backend as K
+from keras import optimizers
 import numpy as np
 
+import cifar10
 import imagenet
 from quantize import VBQ
 
@@ -32,13 +34,14 @@ def converter(partition):
 def calculate_fitness(genom):
     K.clear_session()
     print("start evaluation!")
-    model = VGG16(weights='imagenet')
+#     model = VGG16(weights='imagenet')
+    model = cifar10.build_hinton_model(x_train.shape[1:])
     print("model load: success.")
     W = model.get_weights()
     W_q = list(map(converter(genom.gene), W))
     print("quantize: success.")
     model.set_weights(W_q)
-    model.compile(optimizer='sgd',
+    model.compile(optimizer=optimizers.Adam(),
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
     predict = model.predict(preprocess_input(val_X))
@@ -56,7 +59,8 @@ class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
 
 def serve():
     global val_X, val_y
-    val_X, val_y = imagenet.load()
+#     val_X, val_y = imagenet.load()
+    _, _, val_X, val_y = cifar10.read_data()
     print("data load: success.")
     server = grpc.server(futures.ThreadPoolExecutor())
     genom_pb2_grpc.add_GenomEvaluationServicer_to_server(
