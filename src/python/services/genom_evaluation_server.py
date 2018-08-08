@@ -32,7 +32,7 @@ def converter(partition):
 
 
 def calculate_fitness(genom):
-#     K.clear_session()
+    K.clear_session()
     print("start evaluation!")
 #     model = VGG16(weights='imagenet')
     model = cifar10.build_hinton_model(val_X.shape[1:])
@@ -45,12 +45,15 @@ def calculate_fitness(genom):
 #     model.compile(optimizer=optimizers.Adam(),
 #                   loss='categorical_crossentropy',
 #                   metrics=['accuracy'])
-    predict = model.predict(val_X)
-    print("predict: ", predict[:5])
-    print("labels: ", val_y[:5])
-    print(val_y[:5]==predict[:5])
-    print("evaluate: success.")
-    return np.sum(val_y == predict) / len(val_y)
+#     predict = model.predict(val_X)
+#     predict = np.argmax(predict, axis=1)
+#     print("predict: ", predict[:5])
+#     print("labels: ", val_y[:5])
+#     print(val_y[:5]==predict[:5])
+#     print("evaluate: success.")
+#     return np.sum(val_y == predict) / len(val_y)
+    score = model.evaluate(val_X, val_y)
+    return score[1]
 
 class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
     def GetIndividual(self, request, context):
