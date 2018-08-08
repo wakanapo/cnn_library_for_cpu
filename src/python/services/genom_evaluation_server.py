@@ -36,14 +36,15 @@ def calculate_fitness(genom):
     print("start evaluation!")
 #     model = VGG16(weights='imagenet')
     model = cifar10.build_hinton_model(x_train.shape[1:])
+    model.load_weights('data/hinton.h5')
     print("model load: success.")
-    W = model.get_weights()
-    W_q = list(map(converter(genom.gene), W))
-    print("quantize: success.")
-    model.set_weights(W_q)
-    model.compile(optimizer=optimizers.Adam(),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+#     W = model.get_weights()
+#     W_q = list(map(converter(genom.gene), W))
+#     print("quantize: success.")
+#     model.set_weights(W_q)
+#     model.compile(optimizer=optimizers.Adam(),
+#                   loss='categorical_crossentropy',
+#                   metrics=['accuracy'])
     predict = model.predict(preprocess_input(val_X))
     predict = np.argmax(predict, axis=1)
     print("predict: ", predict[:5])
