@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <thread>
 #include <vector>
+#include <unistd.h>
 
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
@@ -222,7 +223,7 @@ void GeneticAlgorithm::run(std::string filepath) {
     GenomEvaluationClient client(
       grpc::CreateChannel("localhost:50051",
                           grpc::InsecureChannelCredentials()));
-    std::cerr << "Evaluating genoms on server ..... ";
+    std::cerr << "Evaluating genoms on server ..... " << std::endl;
     for (int i = 0; i < (int)genoms_.size(); ++i) {
       auto& genom = genoms_[i];
       if (genom.getEvaluation() <= 0) {
@@ -233,9 +234,10 @@ void GeneticAlgorithm::run(std::string filepath) {
         }
         client.GetIndividualWithEvaluation(*genes, &individual);
         genom.setEvaluation(individual.evaluation());
+        sleep(1);
       }
     }
-    std::cerr << coloringText("OK!", GREEN) << std::endl;
+    std::cerr << coloringText("Finish Evaluation!", GREEN) << std::endl;
 
     std::cerr << "Saving generation data ..... ";
     std::stringstream ss;
