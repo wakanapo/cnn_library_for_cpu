@@ -24,7 +24,7 @@ def converter(partition):
         for i in range(len(partition)-1):
             arr[(arr > partition[i]) & (arr <= partition[i+1])] = (partition[i] + partition[i + 1]) /  2
         arr[arr < partition[0]] = partition[0]
-        arr[arr > partition[len(arr) - 1]] = partition[len(arr) - 1]
+        arr[arr > partition[len(partition) - 1]] = partition[len(partition) - 1]
         return arr
     return f
 
@@ -43,7 +43,9 @@ def calculate_fitness(genom):
                   metrics=['accuracy'])
     predict = model.predict(preprocess_input(val_X))
     predict = np.argmax(predict, axis=1)
-    print(predict[:5])
+    print("predict: ", predict[:5])
+    print("labels: ", val_y[:5])
+    print(val_y[:5]==predict[:5])
     print("evaluate: success.")
     return np.sum(val_y == predict) / len(val_y)
 
