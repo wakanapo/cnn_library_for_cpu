@@ -1,3 +1,4 @@
+import copy
 from concurrent import futures
 import time
 import os
@@ -11,6 +12,7 @@ from keras.applications.vgg16 import VGG16, preprocess_input
 from keras import backend as K
 from keras import optimizers
 import numpy as np
+import tensorflow as tf
 
 import cifar10
 import imagenet
@@ -19,34 +21,34 @@ from quantize import VBQ
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 val_X = []
 val_y = []
+g_W = []
+graph = tf.get_default_graph()
 
 def converter(partition):
     def f(arr):
         arr = np.asarray(arr)
-        for i in range(len(partition)-1):
+        end_idx = len(partition) - 1
+        for i in range(end_idx):
             arr[(arr > partition[i]) & (arr <= partition[i+1])] = (partition[i] + partition[i + 1]) /  2
-        arr[arr < partition[0]] = partition[0]
-        arr[arr > partition[len(partition) - 1]] = partition[len(partition) - 1]
+        arr[arr <= partition[0]] = partition[0]
+        arr[arr > partition[end_idx]] = partition[end_idx]
         return arr
     return f
 
 
 def calculate_fitness(genom):
-    K.clear_session()
-    print("start evaluation!")
-#     model = VGG16(weights='imagenet')
-    model = cifar10.build_hinton_model(val_X.shape[1:])
-    model.load_weights('data/hinton.h5')
-    print("model load: success.")
-    W = model.get_weights()
-    W_q = list(map(converter(genom.gene), W))
-    print("quantize: success.")
-    model.set_weights(W_q)
-    model.compile(optimizer=optimizers.Adam(),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
-    score = model.evaluate(val_X, val_y)
-    return score[1]
+    with graph.as_default():
+        print("start evaluation!")
+        #     model = VGG16(weights='imagenet')
+        model = cifar10.build_hinton_model(val_X.shape[1:])
+        W_q = list(map(converter(genom.gene), copy.deepcopy(g_W)))
+        print("quantize: success.")
+        model.set_weights(W_q)
+        model.compile(optimizer=optimizers.Adam(),
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
+        score = model.evaluate(val_X, val_y)
+        return score[1]
 
 class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
     def GetIndividual(self, request, context):
@@ -58,6 +60,10 @@ def serve():
 #     val_X, val_y = imagenet.load()
     _, _, val_X, val_y = cifar10.read_data()
     print("data load: success.")
+    model = cifar10.build_hinton_model(val_X.shape[1:])
+    model.load_weights('data/hinton.h5')
+    g_W = model.get_weights()
+    print("model load: success.")
     server = grpc.server(futures.ThreadPoolExecutor())
     genom_pb2_grpc.add_GenomEvaluationServicer_to_server(
         GenomEvaluationServicer(), server)
