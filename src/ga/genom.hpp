@@ -1,5 +1,6 @@
 #pragma once
 #include "util/tensor.hpp"
+#include "ga/evaluate_server.hpp"
 
 class Genom {
 public:
@@ -22,7 +23,7 @@ public:
   Genom mutation(const Genom& parent) const;
   void nextGenerationGeneCreate();
   int randomGenomIndex() const;
-  void run(std::string filename);
+  void run(std::string filename, GenomEvaluationClient client);
   void save(std::string filepath);
   void print(int i);
 private:

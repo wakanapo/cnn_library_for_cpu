@@ -26,7 +26,6 @@
 #include "util/read_data.hpp"
 #include "util/timer.hpp"
 #include "ga/set_gene.hpp"
-#include "ga/evaluate_server.hpp"
 #include "protos/genom.pb.h"
 #include "protos/genom.grpc.pb.h"
 
@@ -209,7 +208,7 @@ void GeneticAlgorithm::save(std::string filename) {
     std::cerr << "Failed to save genoms." << std::endl;
 }
 
-void GeneticAlgorithm::run(std::string filepath) {
+void GeneticAlgorithm::run(std::string filepath, GenomEvaluationClient client) {
   Timer timer;
   for (int i = 0; i < max_generation_; ++i) {
     timer.start();
@@ -220,9 +219,6 @@ void GeneticAlgorithm::run(std::string filepath) {
       std::cerr << coloringText("OK!", GREEN) << std::endl;
     }
 
-    GenomEvaluationClient client(
-      grpc::CreateChannel("localhost:50051",
-                          grpc::InsecureChannelCredentials()));
     std::cerr << "Evaluating genoms on server ..... " << std::endl;
     for (int i = 0; i < (int)genoms_.size(); ++i) {
       auto& genom = genoms_[i];
@@ -268,5 +264,9 @@ int main(int argc, char* argv[]) {
   GeneticAlgorithm ga = GeneticAlgorithm::setup();
   std::string filepath = "data/" + timestamp();
   mkdir(filepath.c_str(), 0777);
-  ga.run(filepath);
+
+  GenomEvaluationClient client(
+    grpc::CreateChannel("localhost:50051",
+                        grpc::InsecureChannelCredentials()));
+  ga.run(filepath, std::move(client));
 }
