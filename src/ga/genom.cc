@@ -263,11 +263,12 @@ int main(int argc, char* argv[]) {
   }
   Options::ParseCommandLine(argc, argv);
   GeneticAlgorithm ga = GeneticAlgorithm::setup();
-  std::string filepath = "data/" + Options::GetFirstGenomFile() + timestamp();
-  mkdir(filepath.c_str(), 0777);
+  std::stringstream filepath;
+  filepath << "data/" << argv[1] << "_" << timestamp();
+  mkdir(filepath.str().c_str(), 0777);
 
   GenomEvaluationClient client(
     grpc::CreateChannel("localhost:50051",
                         grpc::InsecureChannelCredentials()));
-  ga.run(filepath, std::move(client));
+  ga.run(filepath.str(), std::move(client));
 }
