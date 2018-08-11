@@ -79,7 +79,7 @@ def read_data():
     return x_train, y_train, x_test, y_test
 
 def run(model):
-    x_train, y_train, x_test, y_test = read_cifar10_data()
+    x_train, y_train, x_test, y_test = read_data()
     
     model = model.build(x_train.shape[1:])
     model.summary()
