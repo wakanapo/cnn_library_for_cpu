@@ -1,4 +1,4 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from keras import utils
 from keras import optimizers
 from keras.datasets import cifar10
