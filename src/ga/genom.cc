@@ -183,7 +183,7 @@ void GeneticAlgorithm::print(int i, std::string filepath) {
   }
   average_ = sum / genom_num_;
 
-  std::ofstream ofs(filepath+"metadata.txt", std::ios::app);
+  std::ofstream ofs(filepath+"/metadata.txt", std::ios::app);
   ofs << "generation: " << i << std::endl;
   ofs << "Min: " << min << std::endl;
   ofs << "Max: " << max << std::endl;
