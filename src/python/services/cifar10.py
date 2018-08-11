@@ -78,10 +78,10 @@ def read_data():
     x_test /= 255
     return x_train, y_train, x_test, y_test
 
-def run(model):
+def run(my_model):
     x_train, y_train, x_test, y_test = read_data()
     
-    model = model.build(x_train.shape[1:])
+    model = my_model.build(x_train.shape[1:])
     model.summary()
     model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(),
                   metrics=['accuracy'])
@@ -91,7 +91,7 @@ def run(model):
               validation_data=(x_test, y_test), shuffle=True,
               callbacks=[early_stopping])
 
-    model.save_weights("data/" + model.name + ".h5")
+    model.save_weights("data/" + my_model.name + ".h5")
     scores = model.evaluate(x_test, y_test, verbose=1)
     print('Test loss:', scores[0])
     print('Test accuracy:', scores[1])
