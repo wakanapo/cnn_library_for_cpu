@@ -22,7 +22,6 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 val_X = []
 val_y = []
 g_W = []
-graph = tf.get_default_graph()
 
 def converter(partition):
     def f(arr):
@@ -37,7 +36,7 @@ def converter(partition):
 
 
 def calculate_fitness(genom):
-    with graph.as_default():
+    with K.get_session().graph.as_default():
         print("start evaluation!")
         #     model = VGG16(weights='imagenet')
         model = cifar10.build_hinton_model(val_X.shape[1:])
@@ -48,7 +47,8 @@ def calculate_fitness(genom):
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
         score = model.evaluate(val_X, val_y)
-        return score[1]
+    K.clear_session()
+    return score[1]
 
 class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
     def GetIndividual(self, request, context):
@@ -56,7 +56,7 @@ class GenomEvaluationServicer(genom_pb2_grpc.GenomEvaluationServicer):
                                evaluation=calculate_fitness(request))
 
 def serve():
-    global val_X, val_y
+    global val_X, val_y, g_W
 #     val_X, val_y = imagenet.load()
     _, _, val_X, val_y = cifar10.read_data()
     print("data load: success.")
