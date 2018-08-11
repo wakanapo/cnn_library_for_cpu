@@ -88,6 +88,7 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
     g_train=false;
     std::stringstream filename;
     filename << "data/" << argv[1] << ".pb";
+    g_first_genom_file = filename.str();
   } else {
     std::cerr << "Please set mode(train/test)." << std::endl;
     exit(1);
