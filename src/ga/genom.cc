@@ -241,7 +241,7 @@ void GeneticAlgorithm::run(std::string filepath, GenomEvaluationClient client) {
     save(filepath+"/generation"+ss.str());
     std::cerr << coloringText("OK!", GREEN) << std::endl;
     print(i, filepath);
-    timer.show(SEC, "generation" + std::to_string(i));
+    timer.show(SEC, "Generation" + std::to_string(i) + "\n");
     timer.save(SEC, filepath);
   }
 }
