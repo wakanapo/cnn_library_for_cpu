@@ -34,7 +34,7 @@ class Hinton(Model):
         return model
 
 class Vgg_like(Model):
-    def __init__():
+    def __init__(self):
         self.name = "vgg_like"
         
     def build(self, input_shape):
