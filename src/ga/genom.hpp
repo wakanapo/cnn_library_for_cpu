@@ -25,7 +25,7 @@ public:
   int randomGenomIndex() const;
   void run(std::string filename, GenomEvaluationClient client);
   void save(std::string filepath);
-  void print(int i);
+  void print(int i, std::string filepath);
 private:
   GeneticAlgorithm(int genom_length, int genom_num, float cross_rate,
                    float mutation_rate, int max_generation)

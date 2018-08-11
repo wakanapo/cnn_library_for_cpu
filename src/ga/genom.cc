@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 #include <thread>
 #include <vector>
-#include <unistd.h>
 
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
@@ -169,7 +168,7 @@ int GeneticAlgorithm::randomGenomIndex() const{
   return std::rand() % genom_num_;
 }
 
-void GeneticAlgorithm::print(int i) {
+void GeneticAlgorithm::print(int i, std::string filepath) {
   float min = 1.0;
   float max = 0;
   float sum = 0;
@@ -183,11 +182,13 @@ void GeneticAlgorithm::print(int i) {
       max = evaluation;
   }
   average_ = sum / genom_num_;
-  std::cout << "generation: " << i << std::endl;
-  std::cout << "Min: " << min << std::endl;
-  std::cout << "Max: " << max << std::endl;
-  std::cout << "Ave: " << average_ << std::endl;
-  std::cout << "-------------" << std::endl;
+
+  std::ofstream ofs(filepath+"metadata.txt", std::ios::app);
+  ofs << "generation: " << i << std::endl;
+  ofs << "Min: " << min << std::endl;
+  ofs << "Max: " << max << std::endl;
+  ofs << "Ave: " << average_ << std::endl;
+  ofs << "-------------" << std::endl;
 }
 
 void GeneticAlgorithm::save(std::string filename) {
@@ -230,7 +231,6 @@ void GeneticAlgorithm::run(std::string filepath, GenomEvaluationClient client) {
         }
         client.GetIndividualWithEvaluation(*genes, &individual);
         genom.setEvaluation(individual.evaluation());
-        sleep(1);
       }
     }
     std::cerr << coloringText("Finish Evaluation!", GREEN) << std::endl;
@@ -240,8 +240,9 @@ void GeneticAlgorithm::run(std::string filepath, GenomEvaluationClient client) {
     ss << std::setw(3) << std::setfill('0') << i;
     save(filepath+"/generation"+ss.str());
     std::cerr << coloringText("OK!", GREEN) << std::endl;
-    print(i);
-    timer.show(SEC, "");
+    print(i, filepath);
+    timer.show(SEC, "generation" + std::to_string(i));
+    timer.save(SEC, filepath);
   }
 }
 
@@ -262,7 +263,7 @@ int main(int argc, char* argv[]) {
   }
   Options::ParseCommandLine(argc, argv);
   GeneticAlgorithm ga = GeneticAlgorithm::setup();
-  std::string filepath = "data/" + timestamp();
+  std::string filepath = "data/" + Options::GetFirstGenomFile() + timestamp();
   mkdir(filepath.c_str(), 0777);
 
   GenomEvaluationClient client(

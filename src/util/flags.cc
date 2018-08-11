@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <sstream>
 
 #include "util/flags.hpp"
 
@@ -85,7 +86,8 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
     g_weights_input = argv[2];
   } else if (mode == "ga") {
     g_train=false;
-    g_first_genom_file = argv[1];
+    std::stringstream filename;
+    filename << "data/" << argv[1] << ".pb";
   } else {
     std::cerr << "Please set mode(train/test)." << std::endl;
     exit(1);

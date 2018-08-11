@@ -46,7 +46,7 @@ def calculate_fitness(genom):
         model.compile(optimizer=optimizers.Adam(),
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
-        score = model.evaluate(val_X, val_y)
+        score = model.evaluate(val_X[:5000], val_y[:5000])
     K.clear_session()
     return score[1]
 
