@@ -82,5 +82,5 @@ if __name__=='__main__':
         g_offset = int(sys.argv[1])
     else:
         g_offset = 0
-    serve(offset)
+    serve()
 
