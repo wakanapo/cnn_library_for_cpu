@@ -253,6 +253,8 @@ std::string timestamp() {
   ss << lt->tm_year-100;
   ss << std::setw(2) << std::setfill('0') << lt->tm_mon+1;
   ss << std::setw(2) << std::setfill('0') << lt->tm_mday;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_hour;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_min;
   return ss.str();
 }
 

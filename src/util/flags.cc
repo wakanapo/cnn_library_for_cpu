@@ -22,7 +22,7 @@ namespace {
   std::string g_arithmatic_output;
   float g_mutation_rate = 0.1;
   float g_cross_rate = 0.5;
-  int g_max_generation = 30;
+  int g_max_generation = 100;
   std::string g_first_genom_file;
 }  // namespace
 
