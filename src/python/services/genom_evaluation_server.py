@@ -46,7 +46,7 @@ def calculate_fitness(genom):
         model.compile(optimizer=optimizers.Adam(),
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
-        score = model.evaluate(val_X[:5000], val_y[:5000])
+        score = model.evaluate(val_X[g_offset:g_offset+5000], val_y[g_offset:g_offset+5000])
     K.clear_session()
     return score[1]
 
@@ -77,5 +77,10 @@ def serve():
         server.stop(0)
 
 if __name__=='__main__':
-    serve()
+    argv = sys.argv
+    if len(argv) > 1:
+        g_offset = int(sys.argv[1])
+    else:
+        g_offset = 0
+    serve(offset)
 
