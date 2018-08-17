@@ -16,6 +16,7 @@ def run(genom_name):
                     if c_line:
                         sys.stdout.write(c_line.decode('utf-8'))
                     if not c_line and client.poll() is not None:
+                        server.kill()
                         return
         if not s_line and server.poll() is not None:
             print('Server Error.')

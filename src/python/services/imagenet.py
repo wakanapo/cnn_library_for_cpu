@@ -11,7 +11,7 @@ def load():
         labels = np_utils.to_categorical(labels)
 
     imgs = []
-    for picture in tqdm(range(len(labels))):
+    for i in tqdm(range(len(labels))):
         picture_name = "data/ILSVRC2012/val/ILSVRC2012_val_000{0:05d}.JPEG".format(i+1)
         img = img_to_array(load_img(picture_name, target_size=(224, 224)))
         imgs.append(img)
