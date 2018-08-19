@@ -19,23 +19,29 @@ def run(genom_name):
         s_line = non_blocking_read(server.stdout)
         if s_line:
             sys.stdout.write(s_line.decode('utf-8'))
-            if s_line.decode('utf-8') == 'ready\n':
-                client = subprocess.Popen('./bin/ga {}'.format(genom_name), shell=True,
-                                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                while True:
-                    s_line = non_blocking_read(server.stdout)
-                    c_line = non_blocking_read(client.stdout)
-                    if s_line:
-                        sys.stdout.write(s_line.decode('utf-8'))
-                    if c_line:
-                        sys.stdout.write(c_line.decode('utf-8'))
-                    if not c_line and client.poll() is not None:
-                        server.kill()
-                        return
+            if 'Server Ready' in s_line.decode('utf-8'):
+                break
         if not s_line and server.poll() is not None:
             print('Server Error.')
             return
+        
+    client = subprocess.Popen('./bin/ga {}'.format(genom_name), shell=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while True:
+        s_line = non_blocking_read(server.stdout)
+        c_line = non_blocking_read(client.stdout)
+        if s_line:
+            sys.stdout.write(s_line.decode('utf-8'))
+        elif server.poll() is not None:
+            print('Server Error.')
+            return
+        if c_line:
+            sys.stdout.write(c_line.decode('utf-8'))
+        elif client.poll() is not None:
+            server.kill()
+            return
 
+        
 if __name__=='__main__':
     argv = sys.argv
     if len(argv) != 2:

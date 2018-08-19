@@ -65,7 +65,7 @@ def serve():
     model.load_weights('data/'+model_class.name+'.h5')
     g_W = model.get_weights()
     print("model load: success.")
-    print("ready")
+    print("Server Ready")
     sys.stdout.flush()
     server = grpc.server(futures.ThreadPoolExecutor())
     genom_pb2_grpc.add_GenomEvaluationServicer_to_server(
