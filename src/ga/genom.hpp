@@ -9,11 +9,14 @@ public:
   };
   std::vector<float> getGenom() const { return genom_list_; };
   float getEvaluation() const { return evaluation_; };
+  float getRandomEvaluation() const { return random_evaluation_; };
   void setGenom(std::vector<float> genom_list) { genom_list_ = genom_list; };
   void setEvaluation(float evaluation) { evaluation_ = evaluation; };
+  void setRandomEvaluation(float evaluation);
 private:
   std::vector<float> genom_list_;
   float evaluation_;
+  float random_evaluation_;
 };
 
 class GeneticAlgorithm {
