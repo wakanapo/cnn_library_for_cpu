@@ -5,12 +5,13 @@ import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
 from keras.utils import np_utils
 from tqdm import tqdm
+import pickle
 
 def load():
-    matdata = scipy.io.loadmat("data/ILSVRC2012/ILSVRC2012_devkit_t12/data/meta.mat")
-    with open("data/ILSVRC2012/ILSVRC2012_devkit_t12/data/ILSVRC2012_validation_ground_truth.txt", 'r') as f:
-        labels = [matdata['synsets'][int(x)-1]['WNID'][0][0] for x in f]
-
+    with open("data/ILSVRC2012/imagenet_val_labels_for_keras.pkl", 'rb') as f:
+        labels = pickle.load(f)
+    labels = np.identity(1000)[labels[:10000]]
+    
     imgs = []
     for i in tqdm(range(len(labels))):
         picture_name = "data/ILSVRC2012/val/ILSVRC2012_val_000{0:05d}.JPEG".format(i+1)
