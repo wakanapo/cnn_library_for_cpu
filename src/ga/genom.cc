@@ -31,9 +31,13 @@
 std::random_device seed;
 std::mt19937 mt(seed());
 
-void Genom::setRandomEvaluation(float evaluation) {
-  std::uniform_real_distribution<> rand(0.0, evaluation);
+void Genom::setRandomEvaluation() {
+  std::uniform_real_distribution<> rand(0.0, evaluation_);
   random_evaluation_ = rand(mt);
+}
+
+void Genom::setRandomEvaluation(float evaluation) {
+  random_evaluation_ = evaluation;
 }
 
 GeneticAlgorithm GeneticAlgorithm::setup() {
@@ -136,7 +140,6 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
     世代交代処理を行う関数
   */
   int max_idx = maxGenom(genoms_);
-  float tmp = genoms_[max_idx].getRandomEvaluation();
   genoms_[max_idx].setRandomEvaluation(genoms_[max_idx].getEvaluation());
   
   std::sort(genoms_.begin(), genoms_.end(),
@@ -144,7 +147,6 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
               return a.getRandomEvaluation() > b.getRandomEvaluation();
             });
 
-  genoms_[0].setRandomEvaluation(tmp);
   std::uniform_real_distribution<> rand(0.0, mutation_rate_ + cross_rate_);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
@@ -255,8 +257,8 @@ void GeneticAlgorithm::run(std::string filepath, GenomEvaluationClient client) {
         }
         client.GetIndividualWithEvaluation(*genes, &individual);
         genom.setEvaluation(individual.evaluation());
-        genom.setRandomEvaluation(individual.evaluation());
       }
+      genom.setRandomEvaluation();
     }
     std::cerr << coloringText("Finish Evaluation!", GREEN) << std::endl;
 

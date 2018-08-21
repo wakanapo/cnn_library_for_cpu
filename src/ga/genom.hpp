@@ -13,6 +13,7 @@ public:
   void setGenom(std::vector<float> genom_list) { genom_list_ = genom_list; };
   void setEvaluation(float evaluation) { evaluation_ = evaluation; };
   void setRandomEvaluation(float evaluation);
+  void setRandomEvaluation();
 private:
   std::vector<float> genom_list_;
   float evaluation_;
