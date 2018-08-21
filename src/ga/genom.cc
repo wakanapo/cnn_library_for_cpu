@@ -144,7 +144,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
               return a.getRandomEvaluation() > b.getRandomEvaluation();
             });
 
-  genoms_[max_idx].setRandomEvaluation(tmp);
+  genoms_[0].setRandomEvaluation(tmp);
   std::uniform_real_distribution<> rand(0.0, mutation_rate_ + cross_rate_);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
@@ -153,7 +153,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
   for (int i = 0; i < reproduce_genom_num; ++i)
     new_genoms.push_back(genoms_[i]);
 
-  std::uniform_int_distribution<> dist(0, 49);
+  std::uniform_int_distribution<> dist(0, genom_num_-1);
 
   while ((int)new_genoms.size() < genom_num_) {
     int idx = dist(mt);
