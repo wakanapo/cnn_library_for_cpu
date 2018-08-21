@@ -145,7 +145,7 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
             });
 
   genoms_[max_idx].setRandomEvaluation(tmp);
-  std::uniform_real_distribution<> rand(0.0, 1.0);
+  std::uniform_real_distribution<> rand(0.0, mutation_rate_ + cross_rate_);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
   
