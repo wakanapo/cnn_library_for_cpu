@@ -34,11 +34,13 @@
 bin/
 src/protos/__pycache__/
 src/python/.ipynb_checkpoints/
+src/python/services/__pycache__/
 experiment/.ipynb_checkpoints/
 data/arithmatic/
 data/cifar-100-binary
 data/cifar-10-binary
 data/
+experiment/
 
 *.pb.cc
 *.pb.h

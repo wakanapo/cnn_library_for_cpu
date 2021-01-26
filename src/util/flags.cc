@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <sstream>
 
 #include "util/flags.hpp"
 
@@ -21,7 +22,7 @@ namespace {
   std::string g_arithmatic_output;
   float g_mutation_rate = 0.1;
   float g_cross_rate = 0.5;
-  int g_max_generation = 30;
+  int g_max_generation = 100;
   std::string g_first_genom_file;
 }  // namespace
 
@@ -39,6 +40,13 @@ int StringToInt(std::string str) {
 
 float StringToFloat(std::string str) {
   return std::stof(str);
+}
+
+bool StringToBool(std::string str) {
+  if (str == "true")
+    return true;
+  else
+    return false;
 }
 
 void SetFlag(std::string str, flags_type& flags) {
@@ -66,7 +74,7 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
   }
 
   std::string program = argv[0];
-  std::string mode = (program != "./bin/cnn") ? "test" : argv[1];
+  std::string mode = (program != "./bin/cnn") ? "ga" : argv[1];
   if (mode == "train") {
     g_train = true;
   } else if (mode == "test") {
@@ -75,9 +83,12 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
       exit(1);
     }
     g_train=false;
-    if (program != "./bin/cnn")
-      g_first_genom_file = argv[1];
     g_weights_input = argv[2];
+  } else if (mode == "ga") {
+    g_train=false;
+    std::stringstream filename;
+    filename << "data/" << argv[1] << ".pb";
+    g_first_genom_file = filename.str();
   } else {
     std::cerr << "Please set mode(train/test)." << std::endl;
     exit(1);
@@ -102,7 +113,7 @@ void Options::ParseCommandLine(int argc, char* argv[]) {
         g_mutation_rate = StringToFloat(flag_value); }));
   flags.insert(std::make_pair("max_generation", [](std::string flag_value) {
         g_max_generation = StringToInt(flag_value);}));
-  for (int i = (mode == "train") ? 2 : 3; i < argc; ++i)
+  for (int i = (mode == "test") ? 3 : 2; i < argc; ++i)
     SetFlag(argv[i], flags);
 }
 

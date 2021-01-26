@@ -1,11 +1,19 @@
 syntax = "proto3";
-package Gene;
+package GenomEvaluation;
 
-message Gene {
+service GenomEvaluation {
+  rpc GetIndividual(Genom) returns (Individual) {};
+}
+
+message Genom {
   repeated float gene = 1 [packed=true];
+}
+
+message Individual {
+  Genom genom = 1;
   float evaluation = 2;
 }
 
-message Genoms {
-  repeated Gene genoms = 1;
+message Generation {
+  repeated Individual individuals = 1;
 }

@@ -39,10 +39,10 @@ def main(bit, genom_num, filename, flag):
     for _ in range(genom_num - len(genes)):
         genes.append(make_random(bit))
 
-    message = genom_pb2.Genoms();
+    message = genom_pb2.Generation();
     for gene in genes:
-        genoms = message.genoms.add()
-        genoms.gene.extend(gene)
+        genoms = message.individuals.add()
+        genoms.genom.gene.extend(gene)
 
     with open("{}/data/{}.pb".format(pwd, filename), "wb") as f:
         f.write(message.SerializeToString())

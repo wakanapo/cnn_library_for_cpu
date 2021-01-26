@@ -12,6 +12,12 @@
 #include <thread>
 #include <vector>
 
+#include <grpc/grpc.h>
+#include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
+
 #include "ga/genom.hpp"
 #include "util/box_quant.hpp"
 #include "util/color.hpp"
@@ -20,46 +26,47 @@
 #include "util/timer.hpp"
 #include "ga/set_gene.hpp"
 #include "protos/genom.pb.h"
+#include "protos/genom.grpc.pb.h"
 
-void Genom::executeEvaluation(Model model, Dataset<typename Model::InputType,
-                              typename Model::OutputType> test) {
-  model.cast();
+std::random_device seed;
+std::mt19937 mt(seed());
 
-  int cnt = 0;
-  for (int i = 0; i < 4096; ++i) {
-    unsigned long y = model.predict(test.images[i]);
-    if (OneHot<typename Model::OutputType>(y) == test.labels[i])
-      ++cnt;
-  }
+void Genom::setRandomEvaluation() {
+  std::uniform_real_distribution<> rand(0.0, evaluation_);
+  random_evaluation_ = rand(mt);
+}
 
-  evaluation_ = (float)cnt / (float)4096;
+void Genom::setRandomEvaluation(float evaluation) {
+  random_evaluation_ = evaluation;
 }
 
 GeneticAlgorithm GeneticAlgorithm::setup() {
-  Gene::Genoms genes;
+  GenomEvaluation::Generation generation;
   std::fstream input(Options::GetFirstGenomFile(),
                      std::ios::in | std::ios::binary);
-  if (!genes.ParseFromIstream(&input)) {
+  if (!generation.ParseFromIstream(&input)) {
     std::cerr << "Cannot load first genoms." << std::endl;
     exit(1);
   }
 
-  GeneticAlgorithm ga(genes.genoms(0).gene_size(), genes.genoms_size(),
+  GeneticAlgorithm ga(generation.individuals(0).genom().gene_size() ,
+                      generation.individuals_size(),
                       Options::GetCrossRate(),Options::GetMutationRate(),
                       Options::GetMaxGeneration());
   std::cerr << coloringText("Gene Length: " +
-                            std::to_string(genes.genoms(0).gene_size()), BLUE)
+                            std::to_string(generation.individuals(0).
+                                           genom().gene_size()), BLUE)
             << coloringText(", Genom Num: " +
-                            std::to_string(genes.genoms_size()), BLUE)
+                            std::to_string(generation.individuals_size()), BLUE)
             << std::endl;
   
   std::vector<Genom> genoms;
-  for (int i = 0; i < genes.genoms_size(); ++i) {
+  for (int i = 0; i < generation.individuals_size(); ++i) {
     std::vector<float> gene;
-    for (int j = 0; j < genes.genoms(i).gene_size(); ++j) {
-      gene.push_back(genes.genoms(i).gene(j));
+    for (int j = 0; j < generation.individuals(0).genom().gene_size(); ++j) {
+      gene.push_back(generation.individuals(i).genom().gene(j));
     }
-    genoms.push_back({gene, genes.genoms(i).evaluation()});
+    genoms.push_back({gene, generation.individuals(i).evaluation()});
   }
   ga.moveGenoms(std::move(genoms));
   return ga;
@@ -103,8 +110,6 @@ Genom GeneticAlgorithm::mutation(const Genom& parent) const {
   /*
     突然変異関数
   */
-  std::random_device seed;
-  std::mt19937 mt(seed());
   std::uniform_real_distribution<> rand(0.0, 1.0);
   std::vector<float> genes = parent.getGenom();
   
@@ -117,31 +122,49 @@ Genom GeneticAlgorithm::mutation(const Genom& parent) const {
   return {genes, 0};
 }
 
+int maxGenom(std::vector<Genom> genoms) {
+  int max_i = 0;
+  float max_v = genoms[0].getEvaluation();
+  for (int i = 0; i < genoms.size(); ++i) {
+    if (genoms[i].getEvaluation() >  max_v) {
+      max_i = i;
+      max_v = genoms[i].getEvaluation();
+    }
+  }
+  return max_i;
+}
+
 
 void GeneticAlgorithm::nextGenerationGeneCreate() {
   /*
     世代交代処理を行う関数
   */
+  int max_idx = maxGenom(genoms_);
+  genoms_[max_idx].setRandomEvaluation(genoms_[max_idx].getEvaluation());
+  
   std::sort(genoms_.begin(), genoms_.end(),
             [](const Genom& a, const Genom& b) {
-              return  a.getEvaluation() >  b.getEvaluation();
+              return a.getRandomEvaluation() > b.getRandomEvaluation();
             });
-  
-  std::random_device seed;
-  std::mt19937 mt(seed());
-  std::uniform_real_distribution<> rand(0.0, 1.0);
+
+  std::uniform_real_distribution<> rand(0.0, mutation_rate_ + cross_rate_);
   std::vector<Genom> new_genoms;
   new_genoms.reserve(genom_num_);
-  new_genoms.push_back(genoms_[0]);
+  
+  int reproduce_genom_num = (int) genom_num_ * (1 - mutation_rate_ - cross_rate_);
+  for (int i = 0; i < reproduce_genom_num; ++i)
+    new_genoms.push_back(genoms_[i]);
+
+  std::uniform_int_distribution<> dist(0, genom_num_-1);
 
   while ((int)new_genoms.size() < genom_num_) {
-    int idx = randomGenomIndex();
+    int idx = dist(mt);
     auto r = rand(mt);
-    /* 選択 */
-    if (r > mutation_rate_ + cross_rate_) {
-      new_genoms.push_back(genoms_[idx]);
-      continue;
-    }
+    // /* 選択 */
+    // if (r > mutation_rate_ + cross_rate_) {
+    //   new_genoms.push_back(genoms_[idx]);
+    //   continue;
+    // }
 
     /* 突然変異 */
     if (r < mutation_rate_) {
@@ -160,8 +183,6 @@ void GeneticAlgorithm::nextGenerationGeneCreate() {
 }
 
 int GeneticAlgorithm::randomGenomIndex() const{
-  std::random_device seed;
-  std::mt19937 mt(seed());
   std::uniform_real_distribution<> rand(0.0, 1.0);
   float r = rand(mt);
   for (int i = 0; i < genom_num_; ++i) {
@@ -173,7 +194,7 @@ int GeneticAlgorithm::randomGenomIndex() const{
   return std::rand() % genom_num_;
 }
 
-void GeneticAlgorithm::print(int i) {
+void GeneticAlgorithm::print(int i, std::string filepath) {
   float min = 1.0;
   float max = 0;
   float sum = 0;
@@ -187,20 +208,24 @@ void GeneticAlgorithm::print(int i) {
       max = evaluation;
   }
   average_ = sum / genom_num_;
-  std::cout << "generation: " << i << std::endl;
-  std::cout << "Min: " << min << std::endl;
-  std::cout << "Max: " << max << std::endl;
-  std::cout << "Ave: " << average_ << std::endl;
-  std::cout << "-------------" << std::endl;
+
+  std::ofstream ofs(filepath+"/metadata.txt", std::ios::app);
+  ofs << "generation: " << i << std::endl;
+  ofs << "Min: " << min << std::endl;
+  ofs << "Max: " << max << std::endl;
+  ofs << "Ave: " << average_ << std::endl;
+  ofs << "-------------" << std::endl;
 }
 
 void GeneticAlgorithm::save(std::string filename) {
-  Gene::Genoms gs;
+  GenomEvaluation::Generation gs;
   for (auto genom : genoms_) {
-    Gene::Gene* g = gs.add_genoms();
+    GenomEvaluation::Individual* g = gs.add_individuals();
+    GenomEvaluation::Genom* genes = new GenomEvaluation::Genom();
     for (auto gene : genom.getGenom()) {
-      g->mutable_gene()->Add(gene);
+      genes->mutable_gene()->Add(gene);
     }
+    g->set_allocated_genom(genes);
     g->set_evaluation(genom.getEvaluation());
   }
 
@@ -210,17 +235,8 @@ void GeneticAlgorithm::save(std::string filename) {
     std::cerr << "Failed to save genoms." << std::endl;
 }
 
-void calculateEvaluation(const Model& model, const Dataset<Model::InputType, Model::OutputType>& test, Genom* genom) {
-  GlobalParams::setParams(genom->getGenom());
-  auto m = std::make_unique<Model>(model);
-  genom->executeEvaluation(*m, test);
-}
-
-void GeneticAlgorithm::run(std::string filepath) {
+void GeneticAlgorithm::run(std::string filepath, GenomEvaluationClient client) {
   Timer timer;
-  Model model;
-  auto test = model.readData(TEST);
-  model.load();
   for (int i = 0; i < max_generation_; ++i) {
     timer.start();
     if (i != 0) {
@@ -229,28 +245,31 @@ void GeneticAlgorithm::run(std::string filepath) {
       nextGenerationGeneCreate();
       std::cerr << coloringText("OK!", GREEN) << std::endl;
     }
-    
-    std::vector<std::thread> threads;
-    /* 各遺伝子の評価*/
-    std::cerr << "Evaluating genoms ..... ";
-    for (auto& genom: genoms_) {
+
+    std::cerr << "Evaluating genoms on server ..... " << std::endl;
+    for (int i = 0; i < (int)genoms_.size(); ++i) {
+      auto& genom = genoms_[i];
       if (genom.getEvaluation() <= 0) {
-        threads.push_back(std::thread(calculateEvaluation, std::ref(model),
-                                      std::ref(test), &genom));
+        GenomEvaluation::Individual individual;
+        GenomEvaluation::Genom* genes = new GenomEvaluation::Genom();
+        for (auto gene : genom.getGenom()) {
+          genes->mutable_gene()->Add(gene);
+        }
+        client.GetIndividualWithEvaluation(*genes, &individual);
+        genom.setEvaluation(individual.evaluation());
       }
+      genom.setRandomEvaluation();
     }
-    for (std::thread& th : threads) {
-      th.join();
-    }
-    std::cerr << coloringText("OK!", GREEN) << std::endl;
+    std::cerr << coloringText("Finish Evaluation!", GREEN) << std::endl;
 
     std::cerr << "Saving generation data ..... ";
     std::stringstream ss;
     ss << std::setw(3) << std::setfill('0') << i;
     save(filepath+"/generation"+ss.str());
     std::cerr << coloringText("OK!", GREEN) << std::endl;
-    print(i);
-    timer.show(SEC, "");
+    print(i, filepath);
+    timer.show(SEC, "Generation" + std::to_string(i) + "\n");
+    timer.save(SEC, filepath);
   }
 }
 
@@ -261,17 +280,24 @@ std::string timestamp() {
   ss << lt->tm_year-100;
   ss << std::setw(2) << std::setfill('0') << lt->tm_mon+1;
   ss << std::setw(2) << std::setfill('0') << lt->tm_mday;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_hour;
+  ss << std::setw(2) << std::setfill('0') << lt->tm_min;
   return ss.str();
 }
 
 int main(int argc, char* argv[]) {
-  if (argc < 3) {
-    std::cerr << "Usage: ./bin/ga first_genom_file  input_file" << std::endl;
+  if (argc < 2) {
+    std::cerr << "Usage: ./bin/ga first_genom_file" << std::endl;
     return 1;
   }
   Options::ParseCommandLine(argc, argv);
   GeneticAlgorithm ga = GeneticAlgorithm::setup();
-  std::string filepath = "data/" + timestamp();
-  mkdir(filepath.c_str(), 0777);
-  ga.run(filepath);
+  std::stringstream filepath;
+  filepath << "data/" << argv[1] << "_" << timestamp();
+  mkdir(filepath.str().c_str(), 0777);
+
+  GenomEvaluationClient client(
+    grpc::CreateChannel("localhost:50051",
+                        grpc::InsecureChannelCredentials()));
+  ga.run(filepath.str(), std::move(client));
 }

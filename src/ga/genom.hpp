@@ -1,10 +1,6 @@
 #pragma once
-
-#include "cnn/cnn.hpp"
-#include "cnn/hinton_cifar10.hpp"
-#include "util/read_data.hpp"
-
-using Model = HintonCifar10<float>;
+#include "util/tensor.hpp"
+#include "ga/evaluate_server.hpp"
 
 class Genom {
 public:
@@ -13,12 +9,15 @@ public:
   };
   std::vector<float> getGenom() const { return genom_list_; };
   float getEvaluation() const { return evaluation_; };
+  float getRandomEvaluation() const { return random_evaluation_; };
   void setGenom(std::vector<float> genom_list) { genom_list_ = genom_list; };
-  void executeEvaluation(Model model, Dataset<typename Model::InputType,
-                         typename Model::OutputType> test);
+  void setEvaluation(float evaluation) { evaluation_ = evaluation; };
+  void setRandomEvaluation(float evaluation);
+  void setRandomEvaluation();
 private:
   std::vector<float> genom_list_;
   float evaluation_;
+  float random_evaluation_;
 };
 
 class GeneticAlgorithm {
@@ -28,9 +27,9 @@ public:
   Genom mutation(const Genom& parent) const;
   void nextGenerationGeneCreate();
   int randomGenomIndex() const;
-  void run(std::string filename);
+  void run(std::string filename, GenomEvaluationClient client);
   void save(std::string filepath);
-  void print(int i);
+  void print(int i, std::string filepath);
 private:
   GeneticAlgorithm(int genom_length, int genom_num, float cross_rate,
                    float mutation_rate, int max_generation)
